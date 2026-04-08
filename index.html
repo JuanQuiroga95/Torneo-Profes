@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Copa PER.EDU — El Torneo de los Profes</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
   :root {
     --verde: #16a34a;
@@ -1421,6 +1424,8 @@
       <a onclick="openLogin()" class="btn-admin-header">⚙ Admin</a>
     </nav>
   </div>
+  <!-- Estado Firebase -->
+  <div id="firebase-status" style="display:none;text-align:center;font-size:11px;font-family:'DM Mono',monospace;padding:4px 0;background:rgba(0,0,0,0.3);letter-spacing:1px;"></div>
 </header>
 
 <!-- HERO -->
@@ -1655,6 +1660,22 @@
       <!-- DASHBOARD -->
       <div class="admin-section active" id="admin-dashboard">
         <div class="admin-section-title">Dashboard</div>
+
+        <!-- Banner instrucciones Firebase -->
+        <div id="firebase-instructions" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.35);border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+          <div style="font-family:'Oswald',sans-serif;font-size:16px;color:#fde047;margin-bottom:10px;letter-spacing:1px;">⚡ ACTIVAR BASE DE DATOS EN LA NUBE (Firebase)</div>
+          <div style="font-size:12px;color:var(--texto-dim);line-height:1.9;font-family:'DM Mono',monospace;">
+            <strong style="color:white">Paso 1:</strong> Entrá a <a href="https://console.firebase.google.com" target="_blank" style="color:#60a5fa">console.firebase.google.com</a><br>
+            <strong style="color:white">Paso 2:</strong> Creá un proyecto nuevo (nombre libre, desactivá Google Analytics)<br>
+            <strong style="color:white">Paso 3:</strong> En el panel izquierdo → <em>Realtime Database</em> → "Crear base de datos" → modo prueba<br>
+            <strong style="color:white">Paso 4:</strong> Volvé al inicio del proyecto → "Agregar app web" (&lt;/&gt;) → copiá el objeto <code>firebaseConfig</code><br>
+            <strong style="color:white">Paso 5:</strong> Abrí el <code>index.html</code> en un editor de texto → buscá <code>FIREBASE_CONFIG</code> (arriba del todo en el JS) → pegá tus datos<br>
+            <strong style="color:white">Paso 6:</strong> Guardá y listo. Los datos quedan en la nube para siempre 🚀
+          </div>
+          <div style="margin-top:12px;font-size:11px;color:rgba(253,224,71,0.6);font-family:'DM Mono',monospace;">
+            ℹ️ Mientras no configures Firebase, los datos se guardan localmente en este navegador (funciona igual, pero solo en este dispositivo).
+          </div>
+        </div>
         <div class="admin-stats-grid">
           <div class="admin-stat-card">
             <div class="admin-stat-num" id="dash-equipos">0</div>
@@ -2000,16 +2021,123 @@ const ESCUELAS = [
   { id: 'esc-4030',   nombre: 'Esc. 4-030 Prof. Ángel Cervera',    logo: '' },
 ];
 
-function saveData() { localStorage.setItem('torneo_profes_data', JSON.stringify(DATA)); }
-function loadData() {
+// ===== FIREBASE CONFIG =====
+// 🔧 PASO 1: Pegá acá los datos de tu proyecto Firebase
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBv305Vp553zSnKO_jWP8CDgIlEU77mIVg",
+  authDomain:        "copa-perdeu-2026.firebaseapp.com",
+  databaseURL:       "https://copa-perdeu-2026-default-rtdb.firebaseio.com",
+  projectId:         "copa-perdeu-2026",
+  storageBucket:     "copa-perdeu-2026.firebasestorage.app",
+  messagingSenderId: "619615422813",
+  appId:             "1:619615422813:web:54941027b7986cf18300b4"
+};
+
+// Estado de conexión
+let firebaseReady = false;
+let dbRef = null;
+
+function initFirebase() {
+  try {
+    // Verifica que el config esté completo
+    if (FIREBASE_CONFIG.apiKey === "TU_API_KEY") {
+      console.warn("⚠️ Firebase no configurado. Usando localStorage como respaldo.");
+      showFirebaseStatus('sin-configurar');
+      loadFromLocalStorage();
+      return;
+    }
+    firebase.initializeApp(FIREBASE_CONFIG);
+    dbRef = firebase.database().ref('torneo');
+    firebaseReady = true;
+    showFirebaseStatus('conectando');
+
+    // Escucha cambios en tiempo real
+    dbRef.on('value', (snapshot) => {
+      const remoto = snapshot.val();
+      if (remoto) {
+        DATA = { ...DATA, ...remoto };
+        if (!DATA.admins || DATA.admins.length === 0) DATA.admins = [...DEFAULT_ADMINS];
+        if (!DATA.noticias) DATA.noticias = [];
+        // Convertir objetos Firebase a arrays
+        ['equipos','partidos','goleadores','noticias','galeria','admins'].forEach(key => {
+          if (DATA[key] && !Array.isArray(DATA[key])) {
+            DATA[key] = Object.values(DATA[key]);
+          }
+        });
+      } else {
+        // Primera vez: subir datos iniciales
+        dbRef.set(DATA);
+      }
+      renderPublic();
+      showFirebaseStatus('conectado');
+    }, (error) => {
+      console.error("Error Firebase:", error);
+      showFirebaseStatus('error');
+      loadFromLocalStorage();
+    });
+  } catch(e) {
+    console.error("Error iniciando Firebase:", e);
+    showFirebaseStatus('error');
+    loadFromLocalStorage();
+  }
+}
+
+function saveData() {
+  if (firebaseReady && dbRef) {
+    // Guardar en Firebase (convierte arrays a objetos con ID como clave)
+    const toSave = {};
+    ['equipos','partidos','goleadores','noticias','galeria','admins'].forEach(key => {
+      if (Array.isArray(DATA[key])) {
+        const obj = {};
+        DATA[key].forEach(item => { obj[item.id || ('k_' + Math.random().toString(36).slice(2))] = item; });
+        toSave[key] = obj;
+      }
+    });
+    toSave.config = DATA.config;
+    dbRef.set(toSave).catch(e => {
+      console.error("Error guardando en Firebase:", e);
+      // Respaldo local
+      localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
+    });
+  } else {
+    localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
+  }
+}
+
+function loadFromLocalStorage() {
   const s = localStorage.getItem('torneo_profes_data');
   if (s) {
     const parsed = JSON.parse(s);
     DATA = { ...DATA, ...parsed };
     if (!DATA.admins || DATA.admins.length === 0) DATA.admins = [...DEFAULT_ADMINS];
-    // Asegurar noticia inicial si no hay noticias
     if (!DATA.noticias) DATA.noticias = [];
   }
+  renderPublic();
+}
+
+function loadData() {
+  // loadData ahora solo carga desde localStorage como fallback inicial
+  // Firebase se inicializa por separado en initFirebase()
+  loadFromLocalStorage();
+}
+
+// Indicador visual de estado Firebase
+function showFirebaseStatus(estado) {
+  const el = document.getElementById('firebase-status');
+  if (!el) return;
+  const estados = {
+    'sin-configurar': { color: '#eab308', text: '⚠ Base de datos local (configurar Firebase)' },
+    'conectando':     { color: '#60a5fa', text: '⏳ Conectando a Firebase...' },
+    'conectado':      { color: '#22c55e', text: '🟢 Base de datos en la nube activa' },
+    'error':          { color: '#ef4444', text: '🔴 Error Firebase — usando datos locales' },
+  };
+  const s = estados[estado] || estados['sin-configurar'];
+  el.style.display = 'block';
+  el.style.color = s.color;
+  el.textContent = s.text;
+  // Ocultar instrucciones si Firebase está activo
+  const banner = document.getElementById('firebase-instructions');
+  if (banner) banner.style.display = (estado === 'conectado') ? 'none' : 'block';
 }
 
 // ===== NAV =====
@@ -2560,10 +2688,10 @@ function showMsg(id) {
 }
 
 // ===== INIT =====
-loadData();
-renderPublic();
+loadData(); // carga localStorage mientras Firebase conecta
 const hoy = new Date().toISOString().split('T')[0];
 document.getElementById('noticia-fecha').value = hoy;
+initFirebase(); // conecta Firebase y reemplaza datos con los de la nube
 </script>
 </body>
 </html>
