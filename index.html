@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Torneo de Profesores 2025</title>
+<title>Copa PER.EDU — El Torneo de los Profes</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1233,6 +1233,169 @@
     nav { overflow-x: auto; gap: 4px; }
     nav a { display: block; white-space: nowrap; font-size: 11px; padding: 6px 10px; }
   }
+  /* ===== ORGANIZADORES ===== */
+  .organizadores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+    max-width: 900px;
+  }
+
+  .org-card {
+    background: var(--gris-oscuro);
+    border: 1px solid var(--borde);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: all 0.25s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 24px;
+  }
+
+  .org-card:hover {
+    border-color: rgba(34,197,94,0.4);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.1);
+  }
+
+  .org-foto {
+    width: 100%;
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .org-foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  .org-foto-placeholder {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(34,197,94,0.2);
+    border: 2px solid var(--borde);
+    color: var(--verde-light);
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .org-info {
+    padding: 18px 20px 0;
+    text-align: center;
+    width: 100%;
+  }
+
+  .org-nombre {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: white;
+    margin-bottom: 4px;
+  }
+
+  .org-rol {
+    font-size: 13px;
+    color: var(--texto-dim);
+    margin-bottom: 14px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.3px;
+  }
+
+  .org-btn-wa {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #25d366;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 9px 22px;
+    border-radius: 30px;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(37,211,102,0.3);
+    letter-spacing: 0.5px;
+  }
+
+  .org-btn-wa:hover {
+    background: #1da851;
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(37,211,102,0.4);
+  }
+
+  /* ===== EQUIPOS ESCUELAS ===== */
+  .equipos-escuelas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 18px;
+  }
+
+  .escuela-card {
+    background: var(--gris-oscuro);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    padding: 24px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.25s;
+    text-align: center;
+  }
+
+  .escuela-card:hover {
+    border-color: rgba(34,197,94,0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  }
+
+  .escuela-logo {
+    width: 88px;
+    height: 88px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+  }
+
+  .escuela-logo-placeholder {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--verde-glow);
+    border: 2px solid var(--borde);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+
+  .escuela-nombre {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+  }
+
+  /* ===== MOBILE ORG ===== */
+  @media (max-width: 600px) {
+    .organizadores-grid { grid-template-columns: 1fr; }
+  }
+
 </style>
 </head>
 <body>
@@ -1241,10 +1404,10 @@
 <header>
   <div class="header-inner">
     <div class="logo">
-      <div class="logo-icon">⚽</div>
+      <div class="logo-icon" style="background:linear-gradient(135deg,#1e88e5,#0d47a1);font-size:13px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:0;color:white;border-radius:10px;padding:0 6px;width:auto;min-width:50px;">PER<span style="color:#22c55e">.EDU</span></div>
       <div class="logo-text">
-        <h1>Torneo de Profesores</h1>
-        <span>Edición 2025</span>
+        <h1>Copa PER.EDU</h1>
+        <span>El Torneo de los Profes · 2026</span>
       </div>
     </div>
     <nav>
@@ -1252,7 +1415,9 @@
       <a onclick="showPage('fixture')" id="nav-fixture">Fixture</a>
       <a onclick="showPage('goleadores')" id="nav-goleadores">Goleadores</a>
       <a onclick="showPage('noticias')" id="nav-noticias">Noticias</a>
+      <a onclick="showPage('equipos')" id="nav-equipos">Equipos</a>
       <a onclick="showPage('galeria')" id="nav-galeria">Galería</a>
+      <a onclick="showPage('organizadores')" id="nav-organizadores">Organizadores</a>
       <a onclick="openLogin()" class="btn-admin-header">⚙ Admin</a>
     </nav>
   </div>
@@ -1261,12 +1426,12 @@
 <!-- HERO -->
 <div class="hero" id="hero-section">
   <div class="hero-orb"></div>
-  <div class="hero-badge">Temporada 2025 · En curso</div>
+  <div class="hero-badge">Temporada 2026 · En curso</div>
   <div class="hero-title">
-    Torneo de <span class="accent">Profes</span>
-    <span class="year">2025</span>
+    Copa <span class="accent">PER.EDU</span>
+    <span class="year">2026</span>
   </div>
-  <p class="hero-sub" id="hero-subtitulo">El campeonato más esperado del año — Docentes compitiendo por la gloria</p>
+  <p class="hero-sub" id="hero-subtitulo">El torneo de los profes — Escuelas técnicas de Mendoza compitiendo por la gloria</p>
   <div class="stats-bar">
     <div class="stat-item">
       <div class="stat-num" id="stat-equipos">0</div>
@@ -1368,11 +1533,76 @@
     </div>
   </div>
 
+  <!-- EQUIPOS PARTICIPANTES -->
+  <div class="page-section" id="section-equipos">
+    <div class="section-title">
+      <div class="icon-badge">🏫</div>
+      Equipos Participantes
+      <div class="line"></div>
+    </div>
+    <div class="equipos-escuelas-grid" id="equipos-escuelas-container">
+      <div class="empty-state"><span class="icon">🏫</span>Sin equipos cargados aún.</div>
+    </div>
+  </div>
+
+  <!-- ORGANIZADORES -->
+  <div class="page-section" id="section-organizadores">
+    <div class="section-title">
+      <div class="icon-badge">👨‍🏫</div>
+      Organizadores de la Copa PER.EDU
+      <div class="line"></div>
+    </div>
+    <div class="organizadores-grid">
+      <div class="org-card">
+        <div class="org-foto" style="background:linear-gradient(135deg,#1a3a2a,#16a34a)">
+          <img src="https://i.imgur.com/ZKpJL3r.png" alt="Sergio Vargas" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="org-foto-placeholder" style="display:none">SV</div>
+        </div>
+        <div class="org-info">
+          <div class="org-nombre">Sergio Vargas</div>
+          <div class="org-rol">Profe de Comunicación Social</div>
+          <a class="org-btn-wa" href="https://wa.me/" target="_blank">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.543 5.878L.057 23.5l5.752-1.507A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.87 0-3.63-.487-5.163-1.341l-.37-.22-3.814 1 1.016-3.727-.242-.384A9.944 9.944 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            Contacto
+          </a>
+        </div>
+      </div>
+      <div class="org-card">
+        <div class="org-foto" style="background:linear-gradient(135deg,#1a3a2a,#16a34a)">
+          <img src="https://i.imgur.com/mTkNgmY.png" alt="Marcos Arabalé" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="org-foto-placeholder" style="display:none">MA</div>
+        </div>
+        <div class="org-info">
+          <div class="org-nombre">Marcos Arabalé</div>
+          <div class="org-rol">Profe Técnico Electromecánico</div>
+          <a class="org-btn-wa" href="https://wa.me/" target="_blank">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.543 5.878L.057 23.5l5.752-1.507A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.87 0-3.63-.487-5.163-1.341l-.37-.22-3.814 1 1.016-3.727-.242-.384A9.944 9.944 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            Contacto
+          </a>
+        </div>
+      </div>
+      <div class="org-card">
+        <div class="org-foto" style="background:linear-gradient(135deg,#1a3a2a,#16a34a)">
+          <img src="https://i.imgur.com/YhBcpKl.png" alt="José Carmona" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="org-foto-placeholder" style="display:none">JC</div>
+        </div>
+        <div class="org-info">
+          <div class="org-nombre">José Carmona</div>
+          <div class="org-rol">Profe de Matemática</div>
+          <a class="org-btn-wa" href="https://wa.me/" target="_blank">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.543 5.878L.057 23.5l5.752-1.507A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.87 0-3.63-.487-5.163-1.341l-.37-.22-3.814 1 1.016-3.727-.242-.384A9.944 9.944 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            Contacto
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <footer>
-  <strong>Torneo de Profesores 2025</strong> · Todos los derechos reservados<br>
-  <span style="opacity:0.5;margin-top:4px;display:block">Hecho con ❤ por la comunidad docente</span>
+  <strong>Copa PER.EDU 2026 — El Torneo de los Profes</strong> · Todos los derechos reservados<br>
+  <span style="opacity:0.5;margin-top:4px;display:block">Organizado por Sergio Vargas · Marcos Arabalé · José Carmona</span>
 </footer>
 
 <!-- MODAL LOGIN -->
@@ -1417,6 +1647,7 @@
       <div class="admin-nav-item" onclick="showAdminSection('noticias')" id="anav-noticias">📰 Noticias</div>
       <div class="admin-nav-item" onclick="showAdminSection('galeria')" id="anav-galeria">📷 Galería</div>
       <div class="admin-nav-item" onclick="showAdminSection('config')" id="anav-config">⚙ Configuración</div>
+      <div class="admin-nav-item" onclick="showAdminSection('admins')" id="anav-admins">🔐 Administradores</div>
     </div>
 
     <div class="admin-content">
@@ -1660,7 +1891,7 @@
           <div class="success-msg" id="msg-config">✅ Configuración guardada.</div>
           <div class="form-group">
             <label>Nombre del torneo</label>
-            <input type="text" id="config-nombre" placeholder="Ej: Torneo de Profesores 2025">
+            <input type="text" id="config-nombre" placeholder="Ej: Torneo de Profesores 2026">
           </div>
           <div class="form-group">
             <label>Subtítulo / descripción</label>
@@ -1673,7 +1904,7 @@
             </div>
             <div class="form-group">
               <label>Año</label>
-              <input type="text" id="config-anio" placeholder="2025">
+              <input type="text" id="config-anio" placeholder="2026">
             </div>
           </div>
           <div class="form-group">
@@ -1695,31 +1926,90 @@
         </div>
       </div>
 
+      <!-- ADMINISTRADORES -->
+      <div class="admin-section" id="admin-admins">
+        <div class="admin-section-title">Gestión de Administradores</div>
+        <div class="admin-card">
+          <h3>Agregar nuevo administrador</h3>
+          <div class="success-msg" id="msg-admin">✅ Administrador creado.</div>
+          <div class="login-error" id="err-admin" style="display:none">El usuario ya existe o la contraseña es muy corta.</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Usuario</label>
+              <input type="text" id="new-admin-user" placeholder="Ej: profe_mario">
+            </div>
+            <div class="form-group">
+              <label>Contraseña</label>
+              <input type="password" id="new-admin-pass" placeholder="Mínimo 4 caracteres">
+            </div>
+          </div>
+          <button class="btn-small verde" onclick="crearAdmin()">+ Crear Administrador</button>
+        </div>
+        <div class="admin-card">
+          <h3>Administradores registrados</h3>
+          <table class="admin-table">
+            <thead><tr><th>Usuario</th><th>Tipo</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-admins"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
 // ===== DATA =====
+const DEFAULT_ADMINS = [{ user: 'juan95', pass: '123456', tipo: 'superadmin' }];
+
 let DATA = {
   equipos: [],
   partidos: [],
   goleadores: [],
-  noticias: [],
+  noticias: [
+    {
+      id: 'noticia-inicial',
+      titulo: '¡Comienza la Copa PER.EDU 2026!',
+      texto: 'Comienzan las clases y comienza el fútbol. El Torneo PER.EDU — el torneo de los profes — arranca en Marzo. Armá el equipo de tu escuela y no te duermas. ¡Inscribite y competí por la gloria!',
+      emoji: '🏆',
+      fecha: '2026-03-01'
+    }
+  ],
   galeria: [],
+  admins: [...DEFAULT_ADMINS],
   config: {
-    nombre: 'Torneo de Profesores',
-    subtitulo: 'El campeonato más esperado del año — Docentes compitiendo por la gloria',
-    institucion: '',
-    anio: '2025',
-    heroMsg: 'El campeonato más esperado del año — Docentes compitiendo por la gloria'
+    nombre: 'Copa PER.EDU',
+    subtitulo: 'El torneo de los profes — Escuelas técnicas de Mendoza',
+    institucion: 'Escuelas Técnicas Mendoza',
+    anio: '2026',
+    heroMsg: 'El torneo de los profes — Escuelas técnicas de Mendoza compitiendo por la gloria'
   }
 };
+
+// Equipos participantes con logos (precargados, solo para visualización pública)
+const ESCUELAS = [
+  { id: 'esc-utn',    nombre: 'Escuela U.T.N.',                    logo: '' },
+  { id: 'esc-4121',   nombre: 'Esc. 4-121 Técnicos Mendocinos',    logo: '' },
+  { id: 'esc-4111',   nombre: 'Esc. 4-111 Ing. Pablo Nogues',      logo: '' },
+  { id: 'esc-4022',   nombre: 'Esc. 4-022 Enrrique Mosconi',       logo: '' },
+  { id: 'esc-4053',   nombre: 'Esc. 4-053 Dr. Horacio Leanez',     logo: '' },
+  { id: 'esc-4104',   nombre: 'Esc. 4-104 Ing. Carlos Fader',      logo: '' },
+  { id: 'esc-4039',   nombre: 'Esc. 4-039 Cruz de Piedra',         logo: '' },
+  { id: 'esc-4109',   nombre: 'Esc. 4-109 Ing. Alvarez Condarco',  logo: '' },
+  { id: 'esc-4097',   nombre: 'Esc. 4-097 Comercial Maipú',        logo: '' },
+  { id: 'esc-4030',   nombre: 'Esc. 4-030 Prof. Ángel Cervera',    logo: '' },
+];
 
 function saveData() { localStorage.setItem('torneo_profes_data', JSON.stringify(DATA)); }
 function loadData() {
   const s = localStorage.getItem('torneo_profes_data');
-  if (s) DATA = JSON.parse(s);
+  if (s) {
+    const parsed = JSON.parse(s);
+    DATA = { ...DATA, ...parsed };
+    if (!DATA.admins || DATA.admins.length === 0) DATA.admins = [...DEFAULT_ADMINS];
+    // Asegurar noticia inicial si no hay noticias
+    if (!DATA.noticias) DATA.noticias = [];
+  }
 }
 
 // ===== NAV =====
@@ -1732,13 +2022,17 @@ function showPage(page) {
 }
 
 // ===== LOGIN =====
+let currentAdmin = null;
 function openLogin() { document.getElementById('modal-login').classList.add('open'); }
 function closeLogin() { document.getElementById('modal-login').classList.remove('open'); }
 function doLogin() {
   const u = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value.trim();
-  if (u === 'juan95' && p === '123456') {
+  const admin = DATA.admins.find(a => a.user === u && a.pass === p);
+  if (admin) {
+    currentAdmin = admin;
     closeLogin();
+    document.querySelector('.admin-user-badge').textContent = '👤 ' + admin.user;
     openPanelAdmin();
   } else {
     document.getElementById('login-error').style.display = 'block';
@@ -1764,6 +2058,7 @@ function showAdminSection(sec) {
   document.getElementById('admin-' + sec).classList.add('active');
   document.getElementById('anav-' + sec).classList.add('active');
   if (sec === 'dashboard') renderDashboard();
+  if (sec === 'admins') renderAdmins();
 }
 
 // ===== RENDER PUBLIC =====
@@ -1774,6 +2069,7 @@ function renderPublic() {
   renderGoleadores();
   renderNoticias();
   renderGaleria();
+  renderEscuelas();
 }
 
 function renderHero() {
@@ -1960,6 +2256,7 @@ function loadAdminData() {
   renderAdminGoleadores();
   renderAdminNoticias();
   renderAdminGaleria();
+  renderAdmins();
   loadConfig();
   poblarSelectsEquipos();
 }
@@ -2192,6 +2489,56 @@ function guardarConfig() {
   DATA.config.anio = document.getElementById('config-anio').value.trim();
   DATA.config.heroMsg = document.getElementById('config-hero-msg').value.trim();
   saveData(); showMsg('msg-config');
+}
+
+// ===== ADMINS =====
+function crearAdmin() {
+  const user = document.getElementById('new-admin-user').value.trim();
+  const pass = document.getElementById('new-admin-pass').value.trim();
+  document.getElementById('err-admin').style.display = 'none';
+  if (!user || pass.length < 4) { document.getElementById('err-admin').style.display = 'block'; return; }
+  if (DATA.admins.find(a => a.user === user)) { document.getElementById('err-admin').style.display = 'block'; return; }
+  DATA.admins.push({ user, pass, tipo: 'admin' });
+  saveData(); showMsg('msg-admin'); renderAdmins();
+  document.getElementById('new-admin-user').value = '';
+  document.getElementById('new-admin-pass').value = '';
+}
+
+function renderAdmins() {
+  const tb = document.getElementById('tabla-admins');
+  if (!DATA.admins.length) { tb.innerHTML = '<tr><td colspan="3" class="empty-state">Sin administradores.</td></tr>'; return; }
+  tb.innerHTML = DATA.admins.map(a => `<tr>
+    <td><strong style="color:white">👤 ${a.user}</strong></td>
+    <td><span class="tag-${a.tipo === 'superadmin' ? 'jugado' : 'pendiente'}">${a.tipo === 'superadmin' ? 'Super Admin' : 'Admin'}</span></td>
+    <td>${a.tipo === 'superadmin' ? '<span style="color:var(--texto-dim);font-size:11px">No se puede borrar</span>' :
+      `<button class="btn-small rojo" onclick="borrarAdmin('${a.user}')">Borrar</button>`}
+    </td>
+  </tr>`).join('');
+}
+
+function borrarAdmin(user) {
+  if (!confirm('¿Borrar administrador ' + user + '?')) return;
+  DATA.admins = DATA.admins.filter(a => a.user !== user);
+  saveData(); renderAdmins();
+}
+
+// ===== EQUIPOS ESCUELAS (sección pública) =====
+function renderEscuelas() {
+  const container = document.getElementById('equipos-escuelas-container');
+  if (!container) return;
+  const logos = [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/UTN_logo.svg/240px-UTN_logo.svg.png',
+    '', '', '', '', '', '', '', '', ''
+  ];
+  const emojis = ['🎓','⚙️','🔧','🏗️','📡','🏭','🌳','🐔','💼','🎓'];
+  container.innerHTML = ESCUELAS.map((e, i) => `
+    <div class="escuela-card">
+      ${logos[i] ? `<img class="escuela-logo" src="${logos[i]}" alt="${e.nombre}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="escuela-logo-placeholder" style="display:none">${emojis[i]}</div>` :
+      `<div class="escuela-logo-placeholder">${emojis[i]}</div>`}
+      <div class="escuela-nombre">${e.nombre}</div>
+    </div>
+  `).join('');
 }
 
 // ===== RESET =====
