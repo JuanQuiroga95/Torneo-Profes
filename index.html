@@ -2670,16 +2670,9 @@ function borrarAdmin(user) {
 function renderEscuelas() {
   const container = document.getElementById('equipos-escuelas-container');
   if (!container) return;
-  const logos = [
-    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/UTN_logo.svg/240px-UTN_logo.svg.png',
-    '', '', '', '', '', '', '', '', ''
-  ];
-  const emojis = ['🎓','⚙️','🔧','🏗️','📡','🏭','🌳','🐔','💼','🎓'];
-  container.innerHTML = ESCUELAS.map((e, i) => `
+  container.innerHTML = ESCUELAS.map(e => `
     <div class="escuela-card">
-      ${logos[i] ? `<img class="escuela-logo" src="${logos[i]}" alt="${e.nombre}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="escuela-logo-placeholder" style="display:none">${emojis[i]}</div>` :
-      `<div class="escuela-logo-placeholder">${emojis[i]}</div>`}
+      <img class="escuela-logo" src="${e.logo}" alt="${e.nombre}">
       <div class="escuela-nombre">${e.nombre}</div>
     </div>
   `).join('');
