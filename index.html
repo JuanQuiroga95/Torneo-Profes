@@ -3435,7 +3435,7 @@ async function agregarFotos() {
   const files = Array.from(input.files);
   for (const file of files) {
     const url = await fileToBase64(file);
-    const foto = { id: Date.now().toString() + Math.random(), url, desc, albumId };
+    const foto = { id: Date.now().toString() + Math.random().toString(36).slice(2), url, desc, albumId };
     if (albumId) {
       const album = DATA.albums.find(a => a.id === albumId);
       if (album) { if (!album.fotos) album.fotos = []; album.fotos.push(foto); }
