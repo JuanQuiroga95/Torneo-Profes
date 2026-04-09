@@ -1590,26 +1590,19 @@
     .organizadores-grid { grid-template-columns: 1fr; }
   }
 
+
   /* ===== GALERÍA — PORTADA DE ÁLBUM ===== */
   .album-cover-wrap {
-    position: relative;
-    cursor: pointer;
-    border-radius: 14px;
-    overflow: hidden;
-    aspect-ratio: 16/9;
-    background: var(--gris-medio);
-    border: 1px solid var(--borde);
+    position: relative; cursor: pointer; border-radius: 14px;
+    overflow: hidden; aspect-ratio: 16/9;
+    background: var(--gris-medio); border: 1px solid var(--borde);
     transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
   }
   .album-cover-wrap:hover {
-    transform: translateY(-3px);
-    border-color: rgba(34,197,94,0.5);
+    transform: translateY(-3px); border-color: rgba(34,197,94,0.5);
     box-shadow: 0 8px 32px rgba(34,197,94,0.15);
   }
-  .album-cover-wrap img {
-    width: 100%; height: 100%; object-fit: cover;
-    transition: transform 0.4s ease;
-  }
+  .album-cover-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
   .album-cover-wrap:hover img { transform: scale(1.06); }
   .album-cover-overlay {
     position: absolute; inset: 0;
@@ -1621,15 +1614,13 @@
   .album-cover-btn {
     background: rgba(34,197,94,0.9); color: white;
     font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
-    padding: 7px 18px; border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
+    padding: 7px 18px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
   }
   .album-fotos-count {
     position: absolute; top: 10px; right: 10px;
     background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
     color: white; font-size: 11px; font-family: 'DM Mono', monospace;
-    padding: 3px 10px; border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.12);
+    padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12);
   }
   .album-placeholder-cover {
     width: 100%; height: 100%;
@@ -1639,105 +1630,74 @@
 
   /* ===== CARRUSEL MODAL ===== */
   #carrusel-overlay {
-    display: none;
-    position: fixed; inset: 0; z-index: 9999;
-    background: rgba(0,0,0,0.92);
-    backdrop-filter: blur(12px);
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
     align-items: center; justify-content: center;
   }
   #carrusel-overlay.open { display: flex; }
-
   .carrusel-modal {
-    position: relative;
-    width: 90vw; max-width: 900px;
-    max-height: 88vh;
-    display: flex; flex-direction: column;
-    animation: carruselIn 0.25s ease;
+    position: relative; width: 90vw; max-width: 900px; max-height: 88vh;
+    display: flex; flex-direction: column; animation: carruselIn 0.25s ease;
   }
   @keyframes carruselIn {
     from { opacity: 0; transform: scale(0.95); }
     to   { opacity: 1; transform: scale(1); }
   }
-
   .carrusel-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 0 14px 0;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 0 14px 0;
   }
   .carrusel-album-name {
-    font-family: 'Oswald', sans-serif;
-    font-size: 18px; font-weight: 600; color: white; letter-spacing: 1px;
+    font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600;
+    color: white; letter-spacing: 1px;
   }
-  .carrusel-counter {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; color: var(--texto-dim);
-  }
+  .carrusel-counter { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--texto-dim); }
   .carrusel-close {
     width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
     color: white; font-size: 18px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s;
-    flex-shrink: 0; margin-left: 16px;
+    transition: background 0.2s; flex-shrink: 0; margin-left: 16px;
   }
   .carrusel-close:hover { background: rgba(239,68,68,0.3); border-color: rgba(239,68,68,0.5); }
-
   .carrusel-img-wrap {
-    position: relative; flex: 1;
-    background: rgba(0,0,0,0.4); border-radius: 14px;
-    overflow: hidden; min-height: 0;
-    border: 1px solid var(--borde);
+    position: relative; flex: 1; background: rgba(0,0,0,0.4); border-radius: 14px;
+    overflow: hidden; min-height: 0; border: 1px solid var(--borde);
     display: flex; align-items: center; justify-content: center;
   }
   .carrusel-img-wrap img {
-    max-width: 100%; max-height: 65vh;
-    object-fit: contain; border-radius: 12px;
-    display: block;
-    transition: opacity 0.2s ease;
+    max-width: 100%; max-height: 65vh; object-fit: contain; border-radius: 12px;
+    display: block; transition: opacity 0.2s ease;
   }
   .carrusel-img-wrap img.fade { opacity: 0; }
-
   .carrusel-desc {
     text-align: center; font-size: 13px; color: var(--texto-dim);
-    font-family: 'DM Sans', sans-serif; min-height: 20px;
-    margin-top: 10px;
+    font-family: 'DM Sans', sans-serif; min-height: 20px; margin-top: 10px;
   }
-
   .carrusel-nav {
     position: absolute; top: 50%; transform: translateY(-50%);
-    width: 44px; height: 44px;
-    background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 50%; color: white; font-size: 20px;
-    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; color: white;
+    font-size: 24px; display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: background 0.2s, border-color 0.2s;
-    user-select: none;
-    z-index: 2;
+    user-select: none; z-index: 2; line-height: 1;
   }
   .carrusel-nav:hover { background: rgba(34,197,94,0.35); border-color: rgba(34,197,94,0.6); }
   .carrusel-nav.prev { left: 10px; }
   .carrusel-nav.next { right: 10px; }
   .carrusel-nav:disabled { opacity: 0.2; pointer-events: none; }
-
   .carrusel-dots {
-    display: flex; justify-content: center; gap: 6px;
-    flex-wrap: wrap; margin-top: 14px;
+    display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 14px;
   }
   .carrusel-dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: rgba(255,255,255,0.2); cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
-    border: none; padding: 0;
+    transition: background 0.2s, transform 0.2s; border: none; padding: 0;
   }
-  .carrusel-dot.active {
-    background: var(--verde-light);
-    transform: scale(1.3);
-  }
-
+  .carrusel-dot.active { background: var(--verde-light); transform: scale(1.3); }
   @media (max-width: 600px) {
     .carrusel-modal { width: 96vw; }
-    .carrusel-nav { width: 36px; height: 36px; font-size: 16px; }
+    .carrusel-nav { width: 36px; height: 36px; font-size: 18px; }
   }
-
 </style>
 </head>
 <body>
@@ -1761,6 +1721,7 @@
     <div class="carrusel-dots" id="carrusel-dots"></div>
   </div>
 </div>
+
 
 <!-- HEADER -->
 <header>
@@ -2712,16 +2673,38 @@ function initFirebase() {
       if (remoto) {
         DATA = { ...DATA, ...remoto };
         if (!DATA.admins || DATA.admins.length === 0) DATA.admins = [...DEFAULT_ADMINS];
-        if (!DATA.albums) DATA.albums = [];
         if (!DATA.noticias) DATA.noticias = [];
         if (!DATA.tarjetas) DATA.tarjetas = [];
         if (!DATA.jugadores) DATA.jugadores = [];
-        // Convertir objetos Firebase a arrays
+        // Convertir objetos Firebase a arrays (campos simples)
         ['equipos','partidos','goleadores','tarjetas','jugadores','noticias','galeria','admins'].forEach(key => {
           if (DATA[key] && !Array.isArray(DATA[key])) {
             DATA[key] = Object.values(DATA[key]);
           }
         });
+        // FIX: convertir albums (objeto Firebase -> array) y sus fotos internas también
+        if (DATA.albums && !Array.isArray(DATA.albums)) {
+          DATA.albums = Object.values(DATA.albums).map(album => {
+            if (album.fotos && !Array.isArray(album.fotos)) {
+              album.fotos = Object.values(album.fotos);
+            } else if (!album.fotos) {
+              album.fotos = [];
+            }
+            return album;
+          });
+        } else if (!DATA.albums) {
+          DATA.albums = [];
+        } else {
+          // Ya es array pero sus fotos internas pueden ser objetos Firebase
+          DATA.albums = DATA.albums.map(album => {
+            if (album.fotos && !Array.isArray(album.fotos)) {
+              album.fotos = Object.values(album.fotos);
+            } else if (!album.fotos) {
+              album.fotos = [];
+            }
+            return album;
+          });
+        }
       } else {
         // Primera vez: subir datos iniciales
         dbRef.set(DATA);
@@ -2742,8 +2725,8 @@ function initFirebase() {
 
 function saveData() {
   if (firebaseReady && dbRef) {
-    // Guardar en Firebase (convierte arrays a objetos con ID como clave)
     const toSave = {};
+    // Arrays simples -> objetos Firebase
     ['equipos','partidos','goleadores','tarjetas','jugadores','noticias','galeria','admins'].forEach(key => {
       if (Array.isArray(DATA[key])) {
         const obj = {};
@@ -2751,10 +2734,28 @@ function saveData() {
         toSave[key] = obj;
       }
     });
+    // FIX: albums también debe guardarse, con sus fotos internas como objetos
+    if (Array.isArray(DATA.albums)) {
+      const albumsObj = {};
+      DATA.albums.forEach(album => {
+        const albumCopy = { ...album };
+        if (Array.isArray(album.fotos)) {
+          const fotosObj = {};
+          album.fotos.forEach(f => {
+            const fid = f.id || ('f_' + Math.random().toString(36).slice(2));
+            fotosObj[fid] = { ...f, id: fid };
+          });
+          albumCopy.fotos = fotosObj;
+        }
+        albumsObj[album.id] = albumCopy;
+      });
+      toSave.albums = albumsObj;
+    } else {
+      toSave.albums = {};
+    }
     toSave.config = DATA.config;
     dbRef.set(toSave).catch(e => {
       console.error("Error guardando en Firebase:", e);
-      // Respaldo local
       localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
     });
   } else {
@@ -3050,53 +3051,41 @@ function renderGaleria() {
     container.innerHTML = '<div class="empty-state"><span class="icon">📷</span>Sin imágenes cargadas.</div>';
     return;
   }
-  // Acumular todos los conjuntos de fotos
+  // Armar conjuntos para el carrusel
   const conjuntos = [];
   albums.forEach(a => {
     const fotos = a.fotos || [];
     if (fotos.length) conjuntos.push({ nombre: a.nombre, desc: a.desc || '', fotos });
   });
-  if (sinAlbum.length) {
-    conjuntos.push({ nombre: 'Fotos generales', desc: '', fotos: sinAlbum });
-  }
+  if (sinAlbum.length) conjuntos.push({ nombre: 'Fotos generales', desc: '', fotos: sinAlbum });
 
-  // Guardar en variable global para el carrusel
   window._galeriaConjuntos = conjuntos;
 
-  // Renderizar grid con una sola portada por álbum
-  const gridItems = conjuntos.map((c, idx) => {
+  if (!conjuntos.length) {
+    container.innerHTML = '<div class="empty-state"><span class="icon">📷</span>Sin imágenes cargadas.</div>';
+    return;
+  }
+
+  const items = conjuntos.map((c, idx) => {
     const primera = c.fotos[0];
     const count = c.fotos.length;
     const imgHtml = primera
       ? `<img src="${primera.url}" alt="${primera.desc || ''}" onerror="this.parentElement.innerHTML='<div class=album-placeholder-cover>📷</div>'">`
       : `<div class="album-placeholder-cover">📷</div>`;
-    return `<div class="album-cover-wrap" onclick="abrirCarrusel(${idx}, 0)" title="Ver álbum: ${c.nombre}">
-      ${imgHtml}
-      <span class="album-fotos-count">${count} foto${count !== 1 ? 's' : ''}</span>
-      <div class="album-cover-overlay">
-        <div class="album-cover-btn">▶ Ver galería</div>
+    return `<div style="display:flex;flex-direction:column;gap:8px">
+      <div class="album-cover-wrap" onclick="abrirCarrusel(${idx}, 0)" title="Ver: ${c.nombre}">
+        ${imgHtml}
+        <span class="album-fotos-count">${count} foto${count !== 1 ? 's' : ''}</span>
+        <div class="album-cover-overlay"><div class="album-cover-btn">▶ Ver galería</div></div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;color:white;letter-spacing:0.5px;cursor:pointer" onclick="abrirCarrusel(${idx}, 0)">${c.nombre}</div>
+        ${c.desc ? `<div style="font-size:11px;color:var(--texto-dim);margin-top:2px">${c.desc}</div>` : ''}
       </div>
     </div>`;
   });
 
-  // Labels de álbum debajo del grid
-  const labelsHtml = conjuntos.map((c, idx) => `
-    <div style="text-align:center;margin-top:-4px;margin-bottom:8px">
-      <div style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;color:white;letter-spacing:0.5px;cursor:pointer" onclick="abrirCarrusel(${idx}, 0)">
-        ${c.nombre}
-      </div>
-      ${c.desc ? `<div style="font-size:11px;color:var(--texto-dim);margin-top:2px">${c.desc}</div>` : ''}
-    </div>`).join('');
-
-  // Grid de portadas
-  const gridHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:0">
-    ${gridItems.join('')}
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:0">
-    ${labelsHtml}
-  </div>`;
-
-  container.innerHTML = gridHtml;
+  container.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px">${items.join('')}</div>`;
 }
 
 // ===== CARRUSEL =====
@@ -3133,7 +3122,6 @@ function _carruselRender() {
   const prev = document.getElementById('carrusel-prev');
   const next = document.getElementById('carrusel-next');
   const f = _carruselFotos[_carruselIdx];
-  // Fade transition
   img.classList.add('fade');
   setTimeout(() => {
     img.src = f ? f.url : '';
@@ -3144,7 +3132,6 @@ function _carruselRender() {
   counter.textContent = `${_carruselIdx + 1} / ${_carruselFotos.length}`;
   prev.disabled = _carruselIdx === 0;
   next.disabled = _carruselIdx === _carruselFotos.length - 1;
-  // Dots
   dots.innerHTML = _carruselFotos.map((_, i) =>
     `<button class="carrusel-dot${i === _carruselIdx ? ' active' : ''}" onclick="carruselGoTo(${i})"></button>`
   ).join('');
@@ -3157,12 +3144,8 @@ function carruselNav(dir) {
   _carruselRender();
 }
 
-function carruselGoTo(idx) {
-  _carruselIdx = idx;
-  _carruselRender();
-}
+function carruselGoTo(idx) { _carruselIdx = idx; _carruselRender(); }
 
-// Teclado
 document.addEventListener('keydown', e => {
   const overlay = document.getElementById('carrusel-overlay');
   if (!overlay || !overlay.classList.contains('open')) return;
