@@ -2305,13 +2305,17 @@
           <div class="success-msg" id="msg-goleador">✅ Goleador registrado.</div>
           <div class="form-row">
             <div class="form-group">
-              <label>Nombre del jugador</label>
-              <input type="text" id="gol-nombre" placeholder="Nombre completo">
+              <label>Equipo</label>
+              <select id="gol-equipo" onchange="golEquipoChange()"><option value="">Seleccionar...</option></select>
             </div>
             <div class="form-group">
-              <label>Equipo</label>
-              <select id="gol-equipo"><option value="">Seleccionar...</option></select>
+              <label>Jugador</label>
+              <select id="gol-jugador" onchange="golJugadorChange()"><option value="">— Seleccioná equipo primero —</option></select>
             </div>
+          </div>
+          <div id="gol-nombre-wrap" style="display:none" class="form-group">
+            <label>Nombre del jugador (manual)</label>
+            <input type="text" id="gol-nombre" placeholder="Nombre completo">
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -2324,7 +2328,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Foto del jugador</label>
+            <label>Foto del jugador <span style="color:var(--texto-dim);font-size:11px">(se usa la del jugador si ya tiene)</span></label>
             <div class="file-upload-area" onclick="document.getElementById('gol-foto-input').click()">
               <input type="file" id="gol-foto-input" accept="image/*" style="display:none" onchange="previewFoto(this,'gol-foto-preview')">
               <div id="gol-foto-preview" class="file-upload-placeholder">📷 Hacer click para subir imagen</div>
@@ -2349,13 +2353,17 @@
           <div class="success-msg" id="msg-tarjeta">✅ Tarjeta registrada.</div>
           <div class="form-row">
             <div class="form-group">
-              <label>Nombre del jugador</label>
-              <input type="text" id="tarjeta-jugador" placeholder="Nombre completo">
+              <label>Equipo</label>
+              <select id="tarjeta-equipo" onchange="tarjetaEquipoChange()"><option value="">Seleccionar...</option></select>
             </div>
             <div class="form-group">
-              <label>Equipo</label>
-              <select id="tarjeta-equipo"><option value="">Seleccionar...</option></select>
+              <label>Jugador</label>
+              <select id="tarjeta-jugador-sel" onchange="tarjetaJugadorChange()"><option value="">— Seleccioná equipo primero —</option></select>
             </div>
+          </div>
+          <div id="tarjeta-jugador-wrap" style="display:none" class="form-group">
+            <label>Nombre del jugador (manual)</label>
+            <input type="text" id="tarjeta-jugador" placeholder="Nombre completo">
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -3617,18 +3625,67 @@ function borrarPartido(id) {
 }
 
 // ===== GOLEADORES =====
-async function agregarGoleador() {
-  const nombre = document.getElementById('gol-nombre').value.trim();
+
+function golEquipoChange() {
   const equipoId = document.getElementById('gol-equipo').value;
+  const sel = document.getElementById('gol-jugador');
+  const jugadores = (DATA.jugadores || []).filter(j => j.equipoId === equipoId);
+  if (!equipoId) {
+    sel.innerHTML = '<option value="">— Seleccioná equipo primero —</option>';
+    document.getElementById('gol-nombre-wrap').style.display = 'none';
+    return;
+  }
+  sel.innerHTML = jugadores.length
+    ? jugadores.map(j => `<option value="${j.id}" data-nombre="${j.nombre}" data-foto="${j.foto || ''}">${j.nombre}</option>`).join('') + '<option value="__otro__">✏ Otro jugador...</option>'
+    : '<option value="__otro__">✏ Ingresar nombre manualmente</option>';
+  sel.dispatchEvent(new Event('change'));
+}
+
+function golJugadorChange() {
+  const sel = document.getElementById('gol-jugador');
+  const val = sel.value;
+  const wrap = document.getElementById('gol-nombre-wrap');
+  wrap.style.display = val === '__otro__' ? 'block' : 'none';
+  if (val && val !== '__otro__') {
+    const opt = sel.options[sel.selectedIndex];
+    const foto = opt.dataset.foto;
+    const prev = document.getElementById('gol-foto-preview');
+    if (foto) {
+      prev.innerHTML = `<img class="preview-single" src="${foto}">`;
+    } else {
+      prev.innerHTML = '📷 Hacer click para subir imagen';
+      prev.className = 'file-upload-placeholder';
+    }
+    document.getElementById('gol-foto-input').value = '';
+  }
+}
+
+async function agregarGoleador() {
+  const equipoId = document.getElementById('gol-equipo').value;
+  const jugadorSel = document.getElementById('gol-jugador').value;
   const goles = parseInt(document.getElementById('gol-cantidad').value) || 1;
   const materia = document.getElementById('gol-materia').value.trim();
-  if (!nombre || !equipoId) { alert('Completá nombre y equipo'); return; }
-  const eq = DATA.equipos.find(e => e.id === equipoId);
-  const fotoInput = document.getElementById('gol-foto-input');
+  if (!equipoId) { alert('Seleccioná un equipo'); return; }
+  if (!jugadorSel) { alert('Seleccioná un jugador'); return; }
+
+  let nombre = '';
   let foto = '';
+
+  if (jugadorSel === '__otro__') {
+    nombre = document.getElementById('gol-nombre').value.trim();
+    if (!nombre) { alert('Ingresá el nombre del jugador'); return; }
+  } else {
+    const jug = (DATA.jugadores || []).find(j => j.id === jugadorSel);
+    nombre = jug ? jug.nombre : document.getElementById('gol-jugador').options[document.getElementById('gol-jugador').selectedIndex].dataset.nombre;
+    foto = jug && jug.foto ? jug.foto : '';
+  }
+
+  const fotoInput = document.getElementById('gol-foto-input');
   if (fotoInput.files && fotoInput.files[0]) {
     foto = await fileToBase64(fotoInput.files[0]);
   }
+
+  const eq = DATA.equipos.find(e => e.id === equipoId);
   const existe = DATA.goleadores.find(g => g.nombre === nombre && g.equipoId === equipoId);
   if (existe) {
     existe.goles += goles;
@@ -3637,6 +3694,9 @@ async function agregarGoleador() {
     DATA.goleadores.push({ id: Date.now().toString(), nombre, equipoId, equipo: eq ? eq.nombre : '', goles, materia, foto });
   }
   saveData(); showMsg('msg-goleador'); renderAdminGoleadores();
+  document.getElementById('gol-equipo').value = '';
+  document.getElementById('gol-jugador').innerHTML = '<option value="">— Seleccioná equipo primero —</option>';
+  document.getElementById('gol-nombre-wrap').style.display = 'none';
   document.getElementById('gol-nombre').value = '';
   document.getElementById('gol-cantidad').value = 1;
   document.getElementById('gol-materia').value = '';
@@ -4034,23 +4094,57 @@ function borrarJugador(id) {
 }
 
 // ===== TARJETAS =====
-function agregarTarjeta() {
-  const jugador = document.getElementById('tarjeta-jugador').value.trim();
+
+function tarjetaEquipoChange() {
   const equipoId = document.getElementById('tarjeta-equipo').value;
+  const sel = document.getElementById('tarjeta-jugador-sel');
+  const jugadores = (DATA.jugadores || []).filter(j => j.equipoId === equipoId);
+  if (!equipoId) {
+    sel.innerHTML = '<option value="">— Seleccioná equipo primero —</option>';
+    document.getElementById('tarjeta-jugador-wrap').style.display = 'none';
+    return;
+  }
+  sel.innerHTML = jugadores.length
+    ? jugadores.map(j => `<option value="${j.nombre}">${j.nombre}</option>`).join('') + '<option value="__otro__">✏ Otro jugador...</option>'
+    : '<option value="__otro__">✏ Ingresar nombre manualmente</option>';
+  document.getElementById('tarjeta-jugador-wrap').style.display =
+    sel.value === '__otro__' ? 'block' : 'none';
+}
+
+function tarjetaJugadorChange() {
+  const val = document.getElementById('tarjeta-jugador-sel').value;
+  document.getElementById('tarjeta-jugador-wrap').style.display = val === '__otro__' ? 'block' : 'none';
+}
+
+function agregarTarjeta() {
+  const equipoId = document.getElementById('tarjeta-equipo').value;
+  const jugadorSel = document.getElementById('tarjeta-jugador-sel').value;
   const tipo = document.getElementById('tarjeta-tipo').value;
   const partido = document.getElementById('tarjeta-partido').value.trim();
   const fecha = document.getElementById('tarjeta-fecha').value;
   const suspension = document.getElementById('tarjeta-suspension').value;
   const motivo = document.getElementById('tarjeta-motivo').value.trim();
-  if (!jugador) { alert('Ingresá el nombre del jugador'); return; }
+
   if (!equipoId) { alert('Seleccioná un equipo'); return; }
+  if (!jugadorSel) { alert('Seleccioná un jugador'); return; }
+
+  let jugador = '';
+  if (jugadorSel === '__otro__') {
+    jugador = document.getElementById('tarjeta-jugador').value.trim();
+    if (!jugador) { alert('Ingresá el nombre del jugador'); return; }
+  } else {
+    jugador = jugadorSel;
+  }
+
   const eq = DATA.equipos.find(e => e.id === equipoId);
   if (!DATA.tarjetas) DATA.tarjetas = [];
   DATA.tarjetas.push({ id: Date.now().toString(), jugador, equipoId, equipo: eq ? eq.nombre : '', tipo, partido, fecha, suspension, motivo });
   saveData();
   showMsg('msg-tarjeta');
-  document.getElementById('tarjeta-jugador').value = '';
   document.getElementById('tarjeta-equipo').value = '';
+  document.getElementById('tarjeta-jugador-sel').innerHTML = '<option value="">— Seleccioná equipo primero —</option>';
+  document.getElementById('tarjeta-jugador-wrap').style.display = 'none';
+  document.getElementById('tarjeta-jugador').value = '';
   document.getElementById('tarjeta-tipo').value = 'amarilla';
   document.getElementById('tarjeta-partido').value = '';
   document.getElementById('tarjeta-fecha').value = '';
