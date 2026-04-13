@@ -2240,8 +2240,23 @@
       <!-- PARTIDOS -->
       <div class="admin-section" id="admin-partidos">
         <div class="admin-section-title">Partidos</div>
+
+        <!-- GENERADOR DE FIXTURE -->
+        <div class="admin-card" style="border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.04);">
+          <h3 style="color:var(--verde-light)">⚽ Generador de Fixture Automático</h3>
+          <div id="fixture-gen-info" style="font-size:13px;color:var(--texto-dim);margin-bottom:14px;line-height:1.8;">
+            Cargá los equipos primero. El sistema generará el fixture completo de todos contra todos (liguilla), y luego los playoffs.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;align-items:center">
+            <button id="btn-gen-ronda" class="btn-small verde" onclick="generarSiguienteRonda()">⚽ Generar Fecha 1</button>
+            <button id="btn-gen-playoffs" class="btn-small amarillo" onclick="generarPlayoffs()" style="display:none">🏆 Crear Playoffs (Semis + Final)</button>
+            <button class="btn-small" onclick="resetFixtureGenerado()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;font-size:11px">🗑 Limpiar fixture generado</button>
+          </div>
+        </div>
+
+        <!-- AGREGAR PARTIDO MANUAL -->
         <div class="admin-card">
-          <h3>Agregar partido</h3>
+          <h3>➕ Agregar partido manualmente</h3>
           <div class="success-msg" id="msg-partido">✅ Partido guardado.</div>
           <div class="form-row">
             <div class="form-group">
@@ -2266,8 +2281,14 @@
           <div class="form-row">
             <div class="form-group">
               <label>Lugar</label>
-              <input type="text" id="partido-lugar" placeholder="Ej: Cancha principal">
+              <input type="text" id="partido-lugar" placeholder="Ej: Predio Gutiérrez">
             </div>
+            <div class="form-group">
+              <label>Cancha</label>
+              <input type="text" id="partido-cancha" placeholder="Ej: Cancha 1">
+            </div>
+          </div>
+          <div class="form-row">
             <div class="form-group">
               <label>Estado</label>
               <select id="partido-estado">
@@ -2288,12 +2309,11 @@
           </div>
           <button class="btn-small verde" onclick="agregarPartido()">+ Guardar Partido</button>
         </div>
+
+        <!-- TABLA PARTIDOS -->
         <div class="admin-card">
           <h3>Todos los partidos (<span id="count-partidos">0</span>)</h3>
-          <table class="admin-table">
-            <thead><tr><th>Fecha</th><th>Partido</th><th>Resultado</th><th>Lugar</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody id="tabla-partidos-admin"></tbody>
-          </table>
+          <div id="tabla-partidos-admin-wrapper"></div>
         </div>
       </div>
 
@@ -3118,6 +3138,7 @@ function renderPublic() {
   renderNoticias();
   renderGaleria();
   renderEscuelas();
+  actualizarGeneradorUI();
 }
 
 function renderHero() {
@@ -3563,18 +3584,21 @@ function agregarPartido() {
   const local = document.getElementById('partido-local').value;
   const visitante = document.getElementById('partido-visitante').value;
   const lugar = document.getElementById('partido-lugar').value.trim();
+  const cancha = document.getElementById('partido-cancha').value.trim();
   const estado = document.getElementById('partido-estado').value;
   const datetime = document.getElementById('partido-datetime').value;
   const golesLocal = estado === 'jugado' ? document.getElementById('partido-goles-local').value : 0;
   const golesVisitante = estado === 'jugado' ? document.getElementById('partido-goles-visitante').value : 0;
   if (!fecha || !local || !visitante) { alert('Completá todos los campos obligatorios'); return; }
   if (local === visitante) { alert('El local y el visitante deben ser diferentes'); return; }
-  DATA.partidos.push({ id: Date.now().toString(), fecha, local, visitante, lugar, estado, datetime, golesLocal: parseInt(golesLocal), golesVisitante: parseInt(golesVisitante) });
+  DATA.partidos.push({ id: Date.now().toString(), fecha, ronda: 0, tipo: 'manual', local, visitante, lugar, cancha, estado, datetime, golesLocal: parseInt(golesLocal), golesVisitante: parseInt(golesVisitante) });
   saveData();
   showMsg('msg-partido');
   renderAdminPartidos();
+  actualizarGeneradorUI();
   document.getElementById('partido-fecha').value = '';
   document.getElementById('partido-lugar').value = '';
+  document.getElementById('partido-cancha').value = '';
   document.getElementById('partido-datetime').value = '';
   document.getElementById('partido-goles-local').value = 0;
   document.getElementById('partido-goles-visitante').value = 0;
@@ -3582,46 +3606,253 @@ function agregarPartido() {
   document.getElementById('resultado-fields').style.display = 'none';
 }
 
+// ===== GENERADOR FIXTURE ROUND-ROBIN =====
+
+function getRondasLiguilla() {
+  const rondas = new Set(
+    DATA.partidos.filter(p => p.tipo === 'liguilla').map(p => p.ronda)
+  );
+  return rondas.size;
+}
+
+function tienePlayoffs() {
+  return DATA.partidos.some(p => p.tipo === 'semifinal' || p.tipo === 'final');
+}
+
+function actualizarGeneradorUI() {
+  const n = DATA.equipos.length;
+  const rondasGen = getRondasLiguilla();
+  const maxRondas = n % 2 === 0 ? n - 1 : n;
+  const hayPlayoffs = tienePlayoffs();
+  const infoEl = document.getElementById('fixture-gen-info');
+  const btnRonda = document.getElementById('btn-gen-ronda');
+  const btnPlayoffs = document.getElementById('btn-gen-playoffs');
+  if (!infoEl) return;
+
+  if (n < 2) {
+    infoEl.innerHTML = '<span style="color:#eab308">⚠ Cargá al menos 2 equipos para generar el fixture.</span>';
+    btnRonda.style.display = 'none';
+    btnPlayoffs.style.display = 'none';
+    return;
+  }
+
+  if (hayPlayoffs) {
+    infoEl.innerHTML = `<span style="color:var(--verde-light)">✅ Fixture completo: ${rondasGen} fecha${rondasGen !== 1 ? 's' : ''} de liguilla + playoffs generados.</span>`;
+    btnRonda.style.display = 'none';
+    btnPlayoffs.style.display = 'none';
+    return;
+  }
+
+  if (rondasGen < maxRondas) {
+    const sig = rondasGen + 1;
+    infoEl.innerHTML = `${n} equipos · ${rondasGen} de ${maxRondas} fechas generadas. <span style="color:var(--verde-light)">→ Siguiente: Fecha ${sig}</span>`;
+    btnRonda.textContent = `⚽ Generar Fecha ${sig}`;
+    btnRonda.style.display = '';
+    btnPlayoffs.style.display = 'none';
+  } else {
+    infoEl.innerHTML = `<span style="color:var(--verde-light)">✅ Liguilla completa (${rondasGen} fechas).</span> ¿Querés crear los playoffs?`;
+    btnRonda.style.display = 'none';
+    btnPlayoffs.style.display = '';
+  }
+}
+
+function generarSiguienteRonda() {
+  const n = DATA.equipos.length;
+  if (n < 2) { alert('Necesitás al menos 2 equipos'); return; }
+  const maxRondas = n % 2 === 0 ? n - 1 : n;
+  const rondasGen = getRondasLiguilla();
+  if (rondasGen >= maxRondas) { alert('Ya se generaron todas las rondas de la liguilla'); return; }
+
+  const rondaNum = rondasGen + 1;
+  const equipos = [...DATA.equipos];
+
+  // Round-robin: si n es impar, agregar slot LIBRE (null)
+  const slots = n % 2 !== 0 ? [null, ...equipos] : [...equipos];
+  const m = slots.length; // siempre par
+
+  // Rotar los slots[1..m-1] hacia la derecha por (rondaNum-1) posiciones
+  const s = [...slots];
+  for (let r = 0; r < rondaNum - 1; r++) {
+    const last = s[m - 1];
+    for (let i = m - 1; i > 1; i--) s[i] = s[i - 1];
+    s[1] = last;
+  }
+
+  // Generar pares
+  const nuevos = [];
+  const base = Date.now();
+  for (let i = 0; i < m / 2; i++) {
+    const a = s[i];
+    const b = s[m - 1 - i];
+    if (!a || !b) continue; // uno tiene fecha libre
+    nuevos.push({
+      id: (base + i).toString(),
+      fecha: `Fecha ${rondaNum}`,
+      ronda: rondaNum,
+      tipo: 'liguilla',
+      local: a.id,
+      visitante: b.id,
+      lugar: '',
+      cancha: '',
+      estado: 'pendiente',
+      datetime: '',
+      golesLocal: 0,
+      golesVisitante: 0
+    });
+  }
+
+  // Si hay equipo con bye, agregar registro informativo (opcional, lo omitimos)
+  DATA.partidos.push(...nuevos);
+  saveData();
+  renderAdminPartidos();
+  actualizarGeneradorUI();
+}
+
+function generarPlayoffs() {
+  if (tienePlayoffs()) { alert('Los playoffs ya fueron generados'); return; }
+  // Calcular standings de la liguilla
+  const pts = {};
+  DATA.equipos.forEach(e => { pts[e.id] = { id: e.id, nombre: e.nombre, p: 0, gf: 0, gc: 0 }; });
+  DATA.partidos.filter(p => p.tipo === 'liguilla' && p.estado === 'jugado').forEach(p => {
+    if (!pts[p.local] || !pts[p.visitante]) return;
+    pts[p.local].gf += p.golesLocal; pts[p.local].gc += p.golesVisitante;
+    pts[p.visitante].gf += p.golesVisitante; pts[p.visitante].gc += p.golesLocal;
+    if (p.golesLocal > p.golesVisitante) { pts[p.local].p += 3; }
+    else if (p.golesLocal < p.golesVisitante) { pts[p.visitante].p += 3; }
+    else { pts[p.local].p += 1; pts[p.visitante].p += 1; }
+  });
+  const standings = Object.values(pts).sort((a, b) => b.p - a.p || (b.gf - b.gc) - (a.gf - a.gc));
+
+  if (standings.length < 4) { alert('Necesitás al menos 4 equipos para los playoffs'); return; }
+
+  const [p1, p2, p3, p4] = standings;
+  const base = Date.now();
+  const nuevos = [
+    { id: base.toString(), fecha: 'Semifinal', ronda: 98, tipo: 'semifinal', local: p1.id, visitante: p4.id, lugar: '', cancha: '', estado: 'pendiente', datetime: '', golesLocal: 0, golesVisitante: 0 },
+    { id: (base + 1).toString(), fecha: 'Semifinal', ronda: 98, tipo: 'semifinal', local: p2.id, visitante: p3.id, lugar: '', cancha: '', estado: 'pendiente', datetime: '', golesLocal: 0, golesVisitante: 0 },
+    { id: (base + 2).toString(), fecha: 'Final', ronda: 99, tipo: 'final', local: 'POR_DEFINIR', visitante: 'POR_DEFINIR', lugar: '', cancha: '', estado: 'pendiente', datetime: '', golesLocal: 0, golesVisitante: 0 }
+  ];
+  DATA.partidos.push(...nuevos);
+  saveData();
+  renderAdminPartidos();
+  actualizarGeneradorUI();
+  alert(`✅ Playoffs generados!\nSemifinal 1: ${p1.nombre} vs ${p4.nombre}\nSemifinal 2: ${p2.nombre} vs ${p3.nombre}\nFinal: a definirse según resultados`);
+}
+
+function resetFixtureGenerado() {
+  if (!confirm('¿Borrar todos los partidos generados automáticamente? Los cargados manualmente se conservan.')) return;
+  DATA.partidos = DATA.partidos.filter(p => p.tipo === 'manual' || !p.tipo);
+  saveData();
+  renderAdminPartidos();
+  actualizarGeneradorUI();
+}
+
 function renderAdminPartidos() {
   document.getElementById('count-partidos').textContent = DATA.partidos.length;
-  const tb = document.getElementById('tabla-partidos-admin');
-  if (!DATA.partidos.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-state">Sin partidos aún.</td></tr>'; return; }
-  tb.innerHTML = DATA.partidos.map(p => {
-    const el = DATA.equipos.find(e => e.id === p.local);
-    const ev = DATA.equipos.find(e => e.id === p.visitante);
-    const resultado = p.estado === 'jugado' ? `<strong style="color:var(--verde-light)">${p.golesLocal} — ${p.golesVisitante}</strong>` : '-';
-    const tag = p.estado === 'jugado' ? '<span class="tag-jugado">Jugado</span>' : '<span class="tag-pendiente">Pendiente</span>';
-    return `<tr>
-      <td>${p.fecha}</td>
-      <td>${el ? el.nombre : p.local} vs ${ev ? ev.nombre : p.visitante}</td>
-      <td>${resultado}</td>
-      <td>${p.lugar || '-'}</td>
-      <td>${tag}</td>
-      <td>
-        <button class="btn-small amarillo" onclick="editarPartido('${p.id}')">Editar</button>
-        <button class="btn-small rojo" onclick="borrarPartido('${p.id}')">Borrar</button>
-      </td>
-    </tr>`;
+  const wrapper = document.getElementById('tabla-partidos-admin-wrapper');
+  if (!wrapper) return;
+  if (!DATA.partidos.length) {
+    wrapper.innerHTML = '<div class="empty-state"><span class="icon">📅</span>Sin partidos aún.</div>';
+    return;
+  }
+
+  // Agrupar por ronda/tipo
+  const grupos = {};
+  DATA.partidos.forEach(p => {
+    const key = p.fecha || 'Sin fecha';
+    if (!grupos[key]) grupos[key] = [];
+    grupos[key].push(p);
+  });
+
+  // Ordenar grupos: Fechas numéricas primero, luego Semifinal, Final, el resto
+  const ordenGrupo = (k) => {
+    const m = k.match(/Fecha\s+(\d+)/i);
+    if (m) return parseInt(m[1]);
+    if (k === 'Semifinal') return 1000;
+    if (k === 'Final') return 1001;
+    return 999;
+  };
+  const keys = Object.keys(grupos).sort((a, b) => ordenGrupo(a) - ordenGrupo(b));
+
+  wrapper.innerHTML = keys.map(key => {
+    const partidos = grupos[key];
+    const tipoLabel = partidos[0]?.tipo === 'semifinal' ? '🥇' : partidos[0]?.tipo === 'final' ? '🏆' : '📅';
+    const rows = partidos.map(p => {
+      const el = DATA.equipos.find(e => e.id === p.local);
+      const ev = DATA.equipos.find(e => e.id === p.visitante);
+      const nomL = el ? el.nombre : (p.local === 'POR_DEFINIR' ? '❓ Por definir' : p.local);
+      const nomV = ev ? ev.nombre : (p.visitante === 'POR_DEFINIR' ? '❓ Por definir' : p.visitante);
+      const resultado = p.estado === 'jugado' ? `<strong style="color:var(--verde-light)">${p.golesLocal} — ${p.golesVisitante}</strong>` : '–';
+      const tag = p.estado === 'jugado' ? '<span class="tag-jugado">Jugado</span>' : '<span class="tag-pendiente">Pendiente</span>';
+      const dtFmt = p.datetime ? new Date(p.datetime).toLocaleString('es-AR', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '–';
+      return `<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--texto-dim)">${dtFmt}</td>
+        <td><strong style="color:white">${nomL}</strong> vs <strong style="color:white">${nomV}</strong></td>
+        <td>${resultado}</td>
+        <td style="font-size:12px">${p.cancha || '–'}</td>
+        <td style="font-size:12px;color:var(--texto-dim)">${p.lugar || '–'}</td>
+        <td>${tag}</td>
+        <td>
+          <button class="btn-small amarillo" onclick="abrirEditarPartido('${p.id}')">✏ Editar</button>
+          <button class="btn-small rojo" onclick="borrarPartido('${p.id}')">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
+    return `<div style="margin-bottom:20px">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--verde-light);text-transform:uppercase;letter-spacing:1.5px;padding:8px 12px;background:var(--verde-glow);border:1px solid var(--borde);border-radius:8px;margin-bottom:8px;display:inline-flex;align-items:center;gap:6px">${tipoLabel} ${key}</div>
+      <table class="admin-table">
+        <thead><tr><th>Horario</th><th>Partido</th><th>Resultado</th><th>Cancha</th><th>Lugar</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
   }).join('');
 }
 
-function editarPartido(id) {
+// ===== MODAL EDITAR PARTIDO =====
+function abrirEditarPartido(id) {
   const p = DATA.partidos.find(x => x.id === id);
   if (!p) return;
-  const gl = prompt('Goles del local (' + (DATA.equipos.find(e => e.id === p.local)?.nombre || p.local) + '):', p.golesLocal);
-  if (gl === null) return;
-  const gv = prompt('Goles del visitante (' + (DATA.equipos.find(e => e.id === p.visitante)?.nombre || p.visitante) + '):', p.golesVisitante);
-  if (gv === null) return;
-  p.golesLocal = parseInt(gl) || 0;
-  p.golesVisitante = parseInt(gv) || 0;
-  p.estado = 'jugado';
-  saveData(); renderAdminPartidos();
+  const el = DATA.equipos.find(e => e.id === p.local);
+  const ev = DATA.equipos.find(e => e.id === p.visitante);
+  document.getElementById('edit-partido-id').value = id;
+  document.getElementById('edit-partido-datetime').value = p.datetime || '';
+  document.getElementById('edit-partido-cancha').value = p.cancha || '';
+  document.getElementById('edit-partido-lugar').value = p.lugar || '';
+  document.getElementById('edit-partido-goles-local').value = p.golesLocal || 0;
+  document.getElementById('edit-partido-goles-visitante').value = p.golesVisitante || 0;
+  document.getElementById('edit-partido-estado').value = p.estado || 'pendiente';
+  document.getElementById('edit-partido-local-label').textContent = el ? el.nombre : 'Local';
+  document.getElementById('edit-partido-visit-label').textContent = ev ? ev.nombre : 'Visitante';
+  document.getElementById('modal-partido-titulo').textContent = `${p.fecha} · ${el ? el.nombre : '?'} vs ${ev ? ev.nombre : '?'}`;
+  document.getElementById('modal-editar-partido').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarEditarPartido() {
+  document.getElementById('modal-editar-partido').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function guardarEditarPartido() {
+  const id = document.getElementById('edit-partido-id').value;
+  const p = DATA.partidos.find(x => x.id === id);
+  if (!p) return;
+  p.datetime = document.getElementById('edit-partido-datetime').value;
+  p.cancha = document.getElementById('edit-partido-cancha').value.trim();
+  p.lugar = document.getElementById('edit-partido-lugar').value.trim();
+  p.estado = document.getElementById('edit-partido-estado').value;
+  p.golesLocal = parseInt(document.getElementById('edit-partido-goles-local').value) || 0;
+  p.golesVisitante = parseInt(document.getElementById('edit-partido-goles-visitante').value) || 0;
+  saveData();
+  cerrarEditarPartido();
+  renderAdminPartidos();
+  renderPublic();
 }
 
 function borrarPartido(id) {
   if (!confirm('¿Borrar este partido?')) return;
   DATA.partidos = DATA.partidos.filter(p => p.id !== id);
-  saveData(); renderAdminPartidos();
+  saveData(); renderAdminPartidos(); actualizarGeneradorUI();
 }
 
 // ===== GOLEADORES =====
@@ -4432,6 +4663,54 @@ function capBorrarJugador(id) {
   renderCapJugadores();
 }
 </script>
+
+<!-- MODAL EDITAR PARTIDO -->
+<div class="modal-overlay" id="modal-editar-partido" onclick="if(event.target===this)cerrarEditarPartido()">
+  <div class="modal-box" style="max-width:500px">
+    <button onclick="cerrarEditarPartido()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.06);border:none;color:var(--texto-dim);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">×</button>
+    <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;color:white;margin-bottom:4px">✏ Editar Partido</div>
+    <div id="modal-partido-titulo" style="font-size:13px;color:var(--verde-light);margin-bottom:20px;font-family:'DM Mono',monospace"></div>
+    <input type="hidden" id="edit-partido-id">
+    <div class="form-row" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>Día y hora</label>
+        <input type="datetime-local" id="edit-partido-datetime">
+      </div>
+      <div class="form-group">
+        <label>Cancha</label>
+        <input type="text" id="edit-partido-cancha" placeholder="Ej: Cancha 1">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Lugar</label>
+      <input type="text" id="edit-partido-lugar" placeholder="Ej: Predio Gutiérrez">
+    </div>
+    <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--verde-light);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">⚽ Resultado</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label id="edit-partido-local-label">Local</label>
+          <input type="number" id="edit-partido-goles-local" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label id="edit-partido-visit-label">Visitante</label>
+          <input type="number" id="edit-partido-goles-visitante" min="0" value="0">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label>Estado</label>
+        <select id="edit-partido-estado">
+          <option value="pendiente">Pendiente</option>
+          <option value="jugado">Jugado</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="cerrarEditarPartido()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--texto-dim);padding:10px 20px;border-radius:10px;cursor:pointer;font-size:14px">Cancelar</button>
+      <button onclick="guardarEditarPartido()" style="background:var(--verde);border:none;color:white;padding:10px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700">💾 Guardar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL EDITAR EQUIPO -->
 <div class="modal-overlay" id="modal-editar-equipo" onclick="if(event.target===this)cerrarModalEditarEquipo()">
