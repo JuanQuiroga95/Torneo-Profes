@@ -3460,10 +3460,75 @@ function renderAdminEquipos() {
       <td>${e.color || '-'}</td>
       <td>
         <button class="btn-small gris" onclick="showAdminSection('jugadores');filtrarJugadoresPorEquipo('${e.id}')" style="margin-right:4px">👥 (${jugadores.length})</button>
+        <button class="btn-small amarillo" onclick="editarEquipo('${e.id}')" style="margin-right:4px">✏ Editar</button>
         <button class="btn-small rojo" onclick="borrarEquipo('${e.id}')">Borrar</button>
       </td>
     </tr>`;
   }).join('');
+}
+
+let _editarEquipoFotoBase64 = '';
+
+function editarEquipo(id) {
+  const eq = DATA.equipos.find(e => e.id === id);
+  if (!eq) return;
+  _editarEquipoFotoBase64 = '';
+  document.getElementById('edit-equipo-id').value = eq.id;
+  document.getElementById('edit-equipo-nombre').value = eq.nombre || '';
+  document.getElementById('edit-equipo-capitan').value = eq.capitan || '';
+  document.getElementById('edit-equipo-color').value = eq.color || '';
+  document.getElementById('edit-equipo-usuario').value = eq.usuario || '';
+  document.getElementById('edit-equipo-pass').value = '';
+  const prev = document.getElementById('edit-equipo-foto-preview');
+  if (eq.foto) {
+    prev.innerHTML = `<img src="${eq.foto}" style="max-height:80px;border-radius:8px">`;
+  } else {
+    prev.innerHTML = '📷 Hacer click para cambiar imagen';
+    prev.className = 'file-upload-placeholder';
+  }
+  document.getElementById('edit-equipo-input').value = '';
+  document.getElementById('modal-editar-equipo').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalEditarEquipo() {
+  document.getElementById('modal-editar-equipo').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function editarEquipoPreviewFoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const r = new FileReader();
+  r.onload = e => {
+    _editarEquipoFotoBase64 = e.target.result;
+    document.getElementById('edit-equipo-foto-preview').innerHTML = `<img src="${e.target.result}" style="max-height:80px;border-radius:8px">`;
+  };
+  r.readAsDataURL(input.files[0]);
+}
+
+function guardarEditarEquipo() {
+  const id = document.getElementById('edit-equipo-id').value;
+  const nombre = document.getElementById('edit-equipo-nombre').value.trim();
+  const capitan = document.getElementById('edit-equipo-capitan').value.trim();
+  const color = document.getElementById('edit-equipo-color').value.trim();
+  const usuario = document.getElementById('edit-equipo-usuario').value.trim();
+  const pass = document.getElementById('edit-equipo-pass').value.trim();
+  if (!nombre) { alert('El nombre del equipo no puede estar vacío'); return; }
+  const idx = DATA.equipos.findIndex(e => e.id === id);
+  if (idx === -1) return;
+  DATA.equipos[idx].nombre = nombre;
+  DATA.equipos[idx].capitan = capitan;
+  DATA.equipos[idx].color = color;
+  DATA.equipos[idx].usuario = usuario;
+  if (pass) DATA.equipos[idx].password = pass;
+  if (_editarEquipoFotoBase64) DATA.equipos[idx].foto = _editarEquipoFotoBase64;
+  // Si el equipo es el capitán actual, actualizar también
+  if (currentCapitan && currentCapitan.id === id) currentCapitan = DATA.equipos[idx];
+  saveData();
+  cerrarModalEditarEquipo();
+  renderAdminEquipos();
+  poblarSelectsEquipos();
+  showMsg('msg-equipo');
 }
 
 function borrarEquipo(id) {
@@ -4272,7 +4337,56 @@ function capBorrarJugador(id) {
   capCheckDJWarning();
   renderCapJugadores();
 }
+</script>
 
+<!-- MODAL EDITAR EQUIPO -->
+<div class="modal-overlay" id="modal-editar-equipo" onclick="if(event.target===this)cerrarModalEditarEquipo()">
+  <div class="modal-box" style="max-width:480px">
+    <button onclick="cerrarModalEditarEquipo()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.06);border:none;color:var(--texto-dim);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">×</button>
+    <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;color:white;margin-bottom:20px">✏ Editar Equipo</div>
+    <input type="hidden" id="edit-equipo-id">
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Nombre del equipo</label>
+      <input type="text" id="edit-equipo-nombre" placeholder="Nombre del equipo">
+    </div>
+    <div class="form-row" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>Nombre del Capitán</label>
+        <input type="text" id="edit-equipo-capitan" placeholder="Nombre completo">
+      </div>
+      <div class="form-group">
+        <label>Color / Camiseta</label>
+        <input type="text" id="edit-equipo-color" placeholder="Ej: Rojo y blanco">
+      </div>
+    </div>
+    <div style="background:rgba(234,179,8,0.06);border:1px solid rgba(234,179,8,0.2);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:#fde047;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">🔑 Acceso del Capitán</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Usuario del capitán</label>
+          <input type="text" id="edit-equipo-usuario" placeholder="Ej: profe_garcia" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Nueva contraseña (opcional)</label>
+          <input type="password" id="edit-equipo-pass" placeholder="Dejar vacío = sin cambio" autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:18px">
+      <label>Foto / Escudo del equipo</label>
+      <div class="file-upload-area" onclick="document.getElementById('edit-equipo-input').click()">
+        <input type="file" id="edit-equipo-input" accept="image/*" style="display:none" onchange="editarEquipoPreviewFoto(this)">
+        <div id="edit-equipo-foto-preview" class="file-upload-placeholder">📷 Hacer click para cambiar imagen</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="cerrarModalEditarEquipo()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--texto-dim);padding:10px 20px;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px">Cancelar</button>
+      <button onclick="guardarEditarEquipo()" style="background:var(--verde);border:none;color:white;padding:10px 24px;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700">💾 Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
 // ===== INIT =====
 loadData(); // carga localStorage mientras Firebase conecta
 const hoy = new Date().toISOString().split('T')[0];
