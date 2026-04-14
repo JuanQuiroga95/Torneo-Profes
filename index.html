@@ -2941,7 +2941,7 @@ function doLogin() {
   }
 
   // 2. Intentar login como capitán de equipo
-  const equipo = DATA.equipos.find(e => e.usuario === u && e.pass === p);
+  const equipo = DATA.equipos.find(e => e.usuario === u && (e.pass === p || e.password === p));
   if (equipo) {
     currentCapitan = equipo;
     currentAdmin = null;
@@ -3549,7 +3549,7 @@ function guardarEditarEquipo() {
   DATA.equipos[idx].capitan = capitan;
   DATA.equipos[idx].color = color;
   DATA.equipos[idx].usuario = usuario;
-  if (pass) DATA.equipos[idx].password = pass;
+  if (pass) DATA.equipos[idx].pass = pass;
   if (_editarEquipoFotoBase64) DATA.equipos[idx].foto = _editarEquipoFotoBase64;
   // Si el equipo es el capitán actual, actualizar también
   if (currentCapitan && currentCapitan.id === id) currentCapitan = DATA.equipos[idx];
@@ -3656,52 +3656,121 @@ function actualizarGeneradorUI() {
   }
 }
 
+// Fecha 1 FIJA: Mosconi vs Pablo Nogues, Condarco vs Villanueva, Cruz de Piedra vs Fader
+// Tecnicos Mendocinos = fecha libre en Fecha 1
+const FECHA1_FIJA = [
+  ['MOSCONI', 'PABLO NOGUES'],
+  ['CONDARCO', 'VILLANUEVA'],
+  ['CRUZ DE PIEDRA', 'FADER'],
+  // TECNICOS MENDOCINOS = libre
+];
+
+function getEquipoByNombre(nombre) {
+  return DATA.equipos.find(e => e.nombre.toUpperCase().trim() === nombre.toUpperCase().trim());
+}
+
 function generarSiguienteRonda() {
   const n = DATA.equipos.length;
-  if (n < 2) { alert('Necesitás al menos 2 equipos'); return; }
+  if (n < 2) { alert('Necesitas al menos 2 equipos'); return; }
   const maxRondas = n % 2 === 0 ? n - 1 : n;
   const rondasGen = getRondasLiguilla();
   if (rondasGen >= maxRondas) { alert('Ya se generaron todas las rondas de la liguilla'); return; }
 
   const rondaNum = rondasGen + 1;
-  const equipos = [...DATA.equipos];
-
-  // Round-robin: si n es impar, agregar slot LIBRE (null)
-  const slots = n % 2 !== 0 ? [null, ...equipos] : [...equipos];
-  const m = slots.length; // siempre par
-
-  // Rotar los slots[1..m-1] hacia la derecha por (rondaNum-1) posiciones
-  const s = [...slots];
-  for (let r = 0; r < rondaNum - 1; r++) {
-    const last = s[m - 1];
-    for (let i = m - 1; i > 1; i--) s[i] = s[i - 1];
-    s[1] = last;
-  }
-
-  // Generar pares
   const nuevos = [];
   const base = Date.now();
-  for (let i = 0; i < m / 2; i++) {
-    const a = s[i];
-    const b = s[m - 1 - i];
-    if (!a || !b) continue; // uno tiene fecha libre
-    nuevos.push({
-      id: (base + i).toString(),
-      fecha: `Fecha ${rondaNum}`,
-      ronda: rondaNum,
-      tipo: 'liguilla',
-      local: a.id,
-      visitante: b.id,
-      lugar: '',
-      cancha: '',
-      estado: 'pendiente',
-      datetime: '',
-      golesLocal: 0,
-      golesVisitante: 0
+
+  if (rondaNum === 1) {
+    // ===== FECHA 1 FIJA =====
+    let pairsOk = 0;
+    FECHA1_FIJA.forEach((par, i) => {
+      const local = getEquipoByNombre(par[0]);
+      const visitante = getEquipoByNombre(par[1]);
+      if (!local || !visitante) {
+        console.warn('Fecha 1 fija: no se encontro equipo', par[0], 'o', par[1]);
+        return;
+      }
+      nuevos.push({
+        id: (base + i).toString(),
+        fecha: 'Fecha 1',
+        ronda: 1,
+        tipo: 'liguilla',
+        local: local.id,
+        visitante: visitante.id,
+        lugar: 'Predio Gutierrez',
+        cancha: '',
+        estado: 'pendiente',
+        datetime: '',
+        golesLocal: 0,
+        golesVisitante: 0
+      });
+      pairsOk++;
     });
+    if (pairsOk === 0) {
+      alert('No se encontraron los equipos de la Fecha 1 fija. Verificá que los nombres coincidan exactamente con: MOSCONI, PABLO NOGUES, CONDARCO, VILLANUEVA, CRUZ DE PIEDRA, FADER, TECNICOS MENDOCINOS.');
+      return;
+    }
+  } else {
+    // ===== FECHAS 2 en adelante: Round-Robin respetando el orden de Fecha 1 =====
+    // Armamos los slots fijando el orden para que Fecha 1 quede como se definió
+    // El equipo libre en Fecha 1 es TECNICOS MENDOCINOS -> va en slot[0] (null/bye anchor)
+    // Orden de slots basado en Fecha 1: [LIBRE, MOSCONI, CONDARCO, CRUZ DE PIEDRA, FADER, VILLANUEVA, PABLO NOGUES]
+    // Que produce los pares: 0-6, 1-5, 2-4, 3 => LIBRE vs PABLO NOGUES(omitido), MOSCONI vs VILLANUEVA(nope)
+    // Usamos directamente la tecnica: ordenar equipos segun aparecion en fecha 1
+    
+    // Construir orden fijo de slots para que la rotacion produzca Fecha 1 en ronda=1
+    // slots[0] = fijo (el del bye en Fecha1 = TECNICOS MENDOCINOS, o null si n es impar)
+    // Para 7 equipos (impar) usamos null como slot[0]
+    // Queremos que en ronda 1 (sin rotacion), los pares sean los de FECHA1_FIJA
+    // Pares de round-robin con m=8 slots sin rotacion: (0,7),(1,6),(2,5),(3,4)
+    // => slot[0]=null, slot[1]=MOSCONI, slot[2]=CONDARCO, slot[3]=CRUZ DE PIEDRA
+    //    slot[4]=FADER, slot[5]=VILLANUEVA, slot[6]=PABLO NOGUES, slot[7]=TECNICOS MENDOCINOS
+    
+    const equipos = [...DATA.equipos];
+    const ORDEN_SLOTS = [null, 'MOSCONI', 'CONDARCO', 'CRUZ DE PIEDRA', 'FADER', 'VILLANUEVA', 'PABLO NOGUES', 'TECNICOS MENDOCINOS'];
+    
+    let slots;
+    // Intentar usar el orden fijo si todos los equipos estan presentes
+    const todosPresentes = ORDEN_SLOTS.filter(Boolean).every(nombre => getEquipoByNombre(nombre));
+    
+    if (todosPresentes && equipos.length === 7) {
+      slots = ORDEN_SLOTS.map(nombre => nombre ? getEquipoByNombre(nombre) : null);
+    } else {
+      // Fallback: round-robin estandar con impar -> null al frente
+      slots = equipos.length % 2 !== 0 ? [null, ...equipos] : [...equipos];
+    }
+    
+    const m = slots.length;
+    
+    // Rotar slots[1..m-1] hacia la derecha (rondaNum-1) veces
+    const s = [...slots];
+    for (let r = 0; r < rondaNum - 1; r++) {
+      const last = s[m - 1];
+      for (let i = m - 1; i > 1; i--) s[i] = s[i - 1];
+      s[1] = last;
+    }
+
+    for (let i = 0; i < m / 2; i++) {
+      const a = s[i];
+      const b = s[m - 1 - i];
+      if (!a || !b) continue;
+      nuevos.push({
+        id: (base + i).toString(),
+        fecha: `Fecha ${rondaNum}`,
+        ronda: rondaNum,
+        tipo: 'liguilla',
+        local: a.id,
+        visitante: b.id,
+        lugar: '',
+        cancha: '',
+        estado: 'pendiente',
+        datetime: '',
+        golesLocal: 0,
+        golesVisitante: 0
+      });
+    }
   }
 
-  // Si hay equipo con bye, agregar registro informativo (opcional, lo omitimos)
   DATA.partidos.push(...nuevos);
   saveData();
   renderAdminPartidos();
