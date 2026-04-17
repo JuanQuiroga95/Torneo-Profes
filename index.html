@@ -1357,43 +1357,122 @@
     vertical-align: middle;
   }
 
+  /* ===== HAMBURGUESA BUTTON ===== */
+  .hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    transition: background 0.2s;
+  }
+  .hamburger-btn:hover { background: rgba(255,255,255,0.1); }
+  .hamburger-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--texto);
+    border-radius: 2px;
+    transition: all 0.3s;
+  }
+  .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+  .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* ===== MENÚ MOBILE OVERLAY ===== */
+  .mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(8,12,8,0.98);
+    z-index: 99;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+  }
+  .mobile-menu-overlay.open { display: block; }
+  .mobile-menu-content {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px 40px;
+    gap: 4px;
+  }
+  .mobile-menu-item {
+    display: block;
+    color: var(--texto-dim);
+    text-decoration: none;
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 16px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mobile-menu-item:hover, .mobile-menu-item.active {
+    color: var(--verde-light);
+    padding-left: 20px;
+  }
+  .mobile-admin-item {
+    margin-top: 16px;
+    color: var(--amarillo-light) !important;
+    border: 1px solid rgba(234,179,8,0.3);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 18px;
+    background: rgba(234,179,8,0.05);
+  }
+
   /* ===== MOBILE ===== */
   @media (max-width: 768px) {
-    .form-row { grid-template-columns: 1fr; }
-    .admin-body { grid-template-columns: 1fr; }
-    .admin-sidebar { display: none; }
-    .stats-bar { border-radius: 12px; }
-    .stat-item { min-width: 80px; padding: 14px 8px; }
-    .stat-num { font-size: 28px; }
-    .hero-title .year { font-size: 72px; }
-    .gol-bar-wrap { display: none; }
-    .partido-lugar { display: none; }
-    .partido-meta { min-width: 50px; }
+    /* Mostrar hamburguesa, ocultar nav desktop */
+    .hamburger-btn { display: flex; }
+    nav { display: none !important; }
 
-    /* Header y nav completo en mobile */
-    .header-inner { padding: 0 12px; height: 60px; gap: 8px; }
+    /* Header compacto */
+    .header-inner { padding: 0 14px; height: 60px; }
     .logo-text h1 { font-size: 15px; letter-spacing: 1px; }
     .logo-text span { font-size: 9px; }
-    nav { overflow-x: auto; gap: 2px; flex-shrink: 1; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    nav::-webkit-scrollbar { display: none; }
-    nav a { display: block !important; white-space: nowrap; font-size: 10px; padding: 6px 10px; }
-    nav a.btn-admin-header { font-size: 10px; padding: 6px 10px; }
 
-    /* Main sections visibles */
-    main { padding: 20px 12px 40px; }
+    /* Main */
+    main { padding: 20px 14px 60px; }
     .section-title { font-size: 20px; margin-bottom: 16px; }
 
     /* Hero compacto */
-    .hero { padding: 40px 12px 40px; }
+    .hero { padding: 36px 14px 36px; }
+    .hero-title .year { font-size: 72px; }
+    .stats-bar { border-radius: 12px; }
+    .stat-item { min-width: 70px; padding: 14px 8px; }
+    .stat-num { font-size: 26px; }
 
-    /* Partidos en mobile */
-    .partido-card { padding: 12px 10px; gap: 8px; flex-wrap: wrap; }
+    /* Formularios */
+    .form-row { grid-template-columns: 1fr; }
+    .admin-body { grid-template-columns: 1fr; }
+    .admin-sidebar { display: none; }
+
+    /* Partidos */
+    .gol-bar-wrap { display: none; }
+    .partido-lugar { display: none; }
+    .partido-meta { min-width: 50px; }
+    .partido-card { padding: 12px 10px; gap: 8px; }
     .partido-equipo { font-size: 12px; }
     .partido-score { font-size: 18px; padding: 6px 10px; min-width: 70px; letter-spacing: 2px; }
 
-    /* Tablas scrolleables */
-    .tabla-wrapper { overflow-x: auto; }
-    table { font-size: 12px; }
+    /* Tablas scrolleables horizontalmente */
+    .tabla-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { font-size: 12px; min-width: 380px; }
     table thead th { padding: 10px 8px; font-size: 10px; }
     table tbody td { padding: 10px 8px; }
 
@@ -1401,14 +1480,19 @@
     .goleador-card { padding: 12px 10px; gap: 8px; }
     .gol-nombre { font-size: 13px; }
     .gol-count { font-size: 22px; }
+
+    /* Tablas-tabs scrolleables */
+    .tablas-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+    .tablas-tab { white-space: nowrap; font-size: 12px; padding: 8px 14px; }
   }
 
   /* Extra pequeño */
   @media (max-width: 400px) {
-    .stat-num { font-size: 22px; }
-    .stat-item { min-width: 65px; padding: 12px 6px; }
-    .hero-title { font-size: 36px; }
+    .stat-num { font-size: 20px; }
+    .stat-item { min-width: 60px; padding: 12px 6px; }
+    .hero-title { font-size: 32px; }
     .hero-title .year { font-size: 56px; }
+    .mobile-menu-item { font-size: 19px; padding: 14px 10px; }
   }
 
   /* ===== ADMIN MOBILE MENU ===== */
@@ -1832,7 +1916,7 @@
         <span>El Torneo de los Profes · 2026</span>
       </div>
     </div>
-    <nav>
+    <nav id="main-nav">
       <a onclick="showPage('tablas')" class="active" id="nav-tablas">Tablas</a>
       <a onclick="showPage('fixture')" id="nav-fixture">Fixture</a>
       <a onclick="showPage('noticias')" id="nav-noticias">Noticias</a>
@@ -1841,10 +1925,26 @@
       <a onclick="showPage('organizadores')" id="nav-organizadores">Organizadores</a>
       <a onclick="openLogin()" class="btn-admin-header">⚙ Admin</a>
     </nav>
+    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
   </div>
   <!-- Estado Firebase -->
   <div id="firebase-status" style="display:none;text-align:center;font-size:11px;font-family:'DM Mono',monospace;padding:4px 0;background:rgba(0,0,0,0.3);letter-spacing:1px;"></div>
 </header>
+
+<!-- MENÚ MOBILE DESPLEGABLE -->
+<div id="mobile-menu" class="mobile-menu-overlay">
+  <div class="mobile-menu-content">
+    <a onclick="showPageMobile('tablas')" id="mnav-tablas" class="mobile-menu-item active">📊 Tablas</a>
+    <a onclick="showPageMobile('fixture')" id="mnav-fixture" class="mobile-menu-item">📅 Fixture</a>
+    <a onclick="showPageMobile('noticias')" id="mnav-noticias" class="mobile-menu-item">📰 Noticias</a>
+    <a onclick="showPageMobile('equipos')" id="mnav-equipos" class="mobile-menu-item">🏆 Equipos</a>
+    <a onclick="showPageMobile('galeria')" id="mnav-galeria" class="mobile-menu-item">🖼 Galería</a>
+    <a onclick="showPageMobile('organizadores')" id="mnav-organizadores" class="mobile-menu-item">👥 Organizadores</a>
+    <a onclick="openLoginMobile()" class="mobile-menu-item mobile-admin-item">⚙ Admin</a>
+  </div>
+</div>
 
 <!-- HERO -->
 <div class="hero" id="hero-section">
@@ -2965,8 +3065,44 @@ function showPage(page) {
   document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('nav a').forEach(el => el.classList.remove('active'));
   document.getElementById('section-' + page).classList.add('active');
-  document.getElementById('nav-' + page).classList.add('active');
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active');
   renderPublic();
+}
+
+// ===== MENÚ HAMBURGUESA MOBILE =====
+function toggleMobileMenu() {
+  const btn = document.getElementById('hamburger-btn');
+  const menu = document.getElementById('mobile-menu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+  // Bloquear scroll del body cuando está abierto
+  document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
+}
+
+function closeMobileMenu() {
+  const btn = document.getElementById('hamburger-btn');
+  const menu = document.getElementById('mobile-menu');
+  btn.classList.remove('open');
+  menu.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showPageMobile(page) {
+  // Actualizar items activos del menú mobile
+  document.querySelectorAll('.mobile-menu-item').forEach(el => el.classList.remove('active'));
+  const mnavEl = document.getElementById('mnav-' + page);
+  if (mnavEl) mnavEl.classList.add('active');
+  // Navegar
+  showPage(page);
+  closeMobileMenu();
+  // Scroll al top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openLoginMobile() {
+  closeMobileMenu();
+  openLogin();
 }
 
 // ===== TABLAS SUB-TABS =====
@@ -4687,7 +4823,7 @@ function verTarjetasEquipo(equipoId) {
       const suspension = r.suspensiones.length ? r.suspensiones.sort().reverse()[0].split('-').reverse().join('/') : (r.rojas > 0 ? '1 fecha' : '-');
       const esSuspendido = r.rojas > 0 || Math.floor(r.amarillasTotal / 3) > 0;
       return `<tr>
-        <td><strong style="color:${esSuspendido ? '#fca5a5' : 'white'}">${r.jugador}</strong>${esSuspendido ? ` <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#fca5a5;border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace">SUSP</span>` : ''}</td>
+        <td><strong style="color:${esSuspendido ? '#fca5a5' : 'white'}">${r.jugador}</strong>${esSuspendido ? ' <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#fca5a5;border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace">SUSP</span>' : ''}</td>
         <td style="text-align:center">${amarillasTotal}</td>
         <td style="text-align:center">${rojasHTML}</td>
         <td style="font-family:'DM Mono',monospace;font-size:12px;color:${esSuspendido ? '#ef4444' : 'var(--texto-dim)'};">${esSuspendido ? suspension : '-'}</td>
