@@ -4687,7 +4687,7 @@ function verTarjetasEquipo(equipoId) {
       const suspension = r.suspensiones.length ? r.suspensiones.sort().reverse()[0].split('-').reverse().join('/') : (r.rojas > 0 ? '1 fecha' : '-');
       const esSuspendido = r.rojas > 0 || Math.floor(r.amarillasTotal / 3) > 0;
       return `<tr>
-        <td><strong style="color:${esSuspendido ? '#fca5a5' : 'white'}">${r.jugador}</strong>${esSuspendido ? ' <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#fca5a5;border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace">SUSP</span>' : ''}</td>
+        <td><strong style="color:${esSuspendido ? '#fca5a5' : 'white'}">${r.jugador}</strong>${esSuspendido ? ` <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#fca5a5;border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace">SUSP</span>` : ''}</td>
         <td style="text-align:center">${amarillasTotal}</td>
         <td style="text-align:center">${rojasHTML}</td>
         <td style="font-family:'DM Mono',monospace;font-size:12px;color:${esSuspendido ? '#ef4444' : 'var(--texto-dim)'};">${esSuspendido ? suspension : '-'}</td>
