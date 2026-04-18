@@ -4940,7 +4940,7 @@ function renderAdminTarjetas() {
       } else {
         cellContent = '<span style="color:var(--texto-dim);font-size:11px">—</span>';
       }
-      row += '<td style="' + cellStyle + '" onclick="abrirEditarTarjetaCelda('' + encodeURIComponent(r.jugador) + '','' + r.equipoId + '','' + f + '')" title="Clic para editar">' + cellContent + '</td>';
+      row += '<td style="' + cellStyle + '" onclick="abrirEditarTarjetaCelda(\'' + encodeURIComponent(r.jugador) + '\',\'' + r.equipoId + '\',\'' + f + '\')" title="Clic para editar">' + cellContent + '</td>';
     });
 
     // Extras (Sin fecha)
