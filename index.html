@@ -5071,7 +5071,7 @@ function verTarjetasEquipo(equipoId) {
     const FECHAS = ['Fecha 1','Fecha 2','Fecha 3','Fecha 4','Fecha 5','Fecha 6','Fecha 7','Semifinal','Final','Sin fecha'];
     const badges = FECHAS.filter(f => (info.amarillasPorFecha[f]||0) > 0 || (info.rojasPorFecha[f]||0) > 0)
       .map(f => {
-        let b = '<span style="font-family:'DM Mono',monospace;font-size:10px;background:rgba(0,0,0,0.3);border-radius:4px;padding:1px 5px">' + f + ': ';
+        let b = '<span style="font-family:monospace;font-size:10px;background:rgba(0,0,0,0.3);border-radius:4px;padding:1px 5px">' + f + ': ';
         if ((info.rojasPorFecha[f]||0) > 0) b += '\ud83d\udfe5' + (info.rojasPorFecha[f] > 1 ? 'x'+info.rojasPorFecha[f] : '');
         if ((info.amarillasPorFecha[f]||0) > 0) b += (info.rojasPorFecha[f] ? ' ' : '') + '\ud83d\udfe8' + (info.amarillasPorFecha[f] > 1 ? 'x'+info.amarillasPorFecha[f] : '');
         b += '</span>';
