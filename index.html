@@ -4768,32 +4768,27 @@ function renderTarjetasPublic() {
     const rojasDisplay = eq.rojas > 0
       ? `<span style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;padding:2px 14px;border-radius:8px">${eq.rojas}</span>`
       : '<span style="color:var(--texto-dim);font-size:12px">—</span>';
-    return `<tr style="cursor:pointer" onclick="verTarjetasEquipo('${eq.equipoId}')" title="Ver jugadores de ${eq.equipo}">
-      <td>
-        <div style="display:flex;align-items:center">
-          ${logoHtml}
-          <strong style="color:white">${eq.equipo || '-'}</strong>
-        </div>
-      </td>
-      <td style="text-align:center">${amarillasDisplay}</td>
-      <td style="text-align:center">${rojasDisplay}</td>
-      <td style="text-align:center"><span style="color:var(--verde-light);font-size:12px;font-family:'DM Mono',monospace">Ver →</span></td>
-    </tr>`;
+    return '<tr style="cursor:pointer" onclick="verTarjetasEquipo(\'' + eq.equipoId + '\')" title="Ver jugadores de ' + (eq.equipo||'') + '">'
+      + '<td><div style="display:flex;align-items:center">' + logoHtml + '<strong style="color:white">' + (eq.equipo || '-') + '</strong></div></td>'
+      + '<td style="text-align:center">' + amarillasDisplay + '</td>'
+      + '<td style="text-align:center">' + rojasDisplay + '</td>'
+      + '<td style="text-align:center"><span style="color:#22c55e;font-size:12px">Ver →</span></td>'
+      + '</tr>';
   }).join('');
 }
 
 function verTarjetasEquipo(equipoId) {
-  const tarjetas = (DATA.tarjetas || []).filter(t => t.equipoId === equipoId);
-  const eq = DATA.equipos.find(e => e.id === equipoId);
+  const tarjetas = (DATA.tarjetas || []).filter(function(t){ return t.equipoId === equipoId; });
+  const eq = DATA.equipos.find(function(e){ return e.id === equipoId; });
   const nombreEl = document.getElementById('tarjetas-detalle-equipo-nombre');
   if (nombreEl) {
-    const logoHtml = eq && eq.foto ? `<img src="${eq.foto}" style="width:32px;height:32px;object-fit:contain;border-radius:6px;margin-right:10px;vertical-align:middle">` : '';
+    const logoHtml = (eq && eq.foto) ? '<img src="' + eq.foto + '" style="width:32px;height:32px;object-fit:contain;border-radius:6px;margin-right:10px;vertical-align:middle">' : '';
     nombreEl.innerHTML = logoHtml + (eq ? eq.nombre : '-');
   }
 
   // Agrupar por jugador
   const porJugador = {};
-  tarjetas.forEach(t => {
+  tarjetas.forEach(function(t) {
     if (!porJugador[t.jugador]) porJugador[t.jugador] = { jugador: t.jugador, equipoId: t.equipoId, amarillasTotal: 0, amarillasActivas: 0, rojas: 0, suspensiones: [] };
     if (t.tipo === 'amarilla') porJugador[t.jugador].amarillasTotal++;
     if (t.tipo === 'roja') {
@@ -4803,31 +4798,39 @@ function verTarjetasEquipo(equipoId) {
   });
 
   // Calcular amarillas activas para cada jugador
-  Object.keys(porJugador).forEach(jugador => {
+  Object.keys(porJugador).forEach(function(jugador) {
     porJugador[jugador].amarillasActivas = getAmarillasActivas(jugador, equipoId);
   });
 
-  const rows = Object.values(porJugador).sort((a, b) => (b.rojas * 10 + b.amarillasTotal) - (a.rojas * 10 + a.amarillasTotal));
+  const rows = Object.values(porJugador).sort(function(a, b){ return (b.rojas * 10 + b.amarillasTotal) - (a.rojas * 10 + a.amarillasTotal); });
   const tb = document.getElementById('tarjetas-body-detalle');
   if (!tb) return;
 
   if (!rows.length) {
     tb.innerHTML = '<tr><td colspan="4" class="empty-state">Sin tarjetas para este equipo.</td></tr>';
   } else {
-    tb.innerHTML = rows.map(r => {
+    tb.innerHTML = rows.map(function(r) {
       const amarillasHTML = Array(r.amarillasActivas).fill('<span class="tarjeta-amarilla"></span>').join('');
-      const amarillasTotal = r.amarillasTotal > 0
-        ? `<span title="${r.amarillasTotal} en total, ${r.amarillasActivas} activas">${amarillasHTML || '<span style="color:var(--texto-dim);font-size:11px">—</span>'}${r.amarillasTotal !== r.amarillasActivas ? `<small style="color:var(--texto-dim);font-size:10px;margin-left:4px">(${r.amarillasTotal})</small>` : ''}</span>`
-        : '<span style="color:var(--texto-dim);font-size:12px">—</span>';
-      const rojasHTML = r.rojas > 0 ? Array(r.rojas).fill('<span class="tarjeta-roja"></span>').join('') : '<span style="color:var(--texto-dim);font-size:12px">—</span>';
-      const suspension = r.suspensiones.length ? r.suspensiones.sort().reverse()[0].split('-').reverse().join('/') : (r.rojas > 0 ? '1 fecha' : '-');
+      const countTxt = (r.amarillasTotal !== r.amarillasActivas) ? '<small style="color:#8fa68f;font-size:10px;margin-left:4px">(' + r.amarillasTotal + ')</small>' : '';
+      const amarillasDisplay = r.amarillasTotal > 0
+        ? '<span>' + (amarillasHTML || '<span style="color:#8fa68f;font-size:11px">-</span>') + countTxt + '</span>'
+        : '<span style="color:#8fa68f;font-size:12px">-</span>';
+      const rojasDisplay = r.rojas > 0
+        ? Array(r.rojas).fill('<span class="tarjeta-roja"></span>').join('')
+        : '<span style="color:#8fa68f;font-size:12px">-</span>';
+      const suspension = r.suspensiones.length
+        ? r.suspensiones.sort().reverse()[0].split('-').reverse().join('/')
+        : (r.rojas > 0 ? '1 fecha' : '-');
       const esSuspendido = r.rojas > 0 || Math.floor(r.amarillasTotal / 3) > 0;
-      return `<tr>
-        <td><strong style="color:${esSuspendido ? '#fca5a5' : 'white'}">${r.jugador}</strong>${esSuspendido ? ' <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#fca5a5;border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace">SUSP</span>' : ''}</td>
-        <td style="text-align:center">${amarillasTotal}</td>
-        <td style="text-align:center">${rojasHTML}</td>
-        <td style="font-family:'DM Mono',monospace;font-size:12px;color:${esSuspendido ? '#ef4444' : 'var(--texto-dim)'};">${esSuspendido ? suspension : '-'}</td>
-      </tr>`;
+      const suspBadge = esSuspendido ? ' <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:1px 6px">SUSP</span>' : '';
+      const nameColor = esSuspendido ? '#fca5a5' : 'white';
+      const suspColor = esSuspendido ? '#ef4444' : '#8fa68f';
+      return '<tr>'
+        + '<td><strong style="color:' + nameColor + '">' + r.jugador + '</strong>' + suspBadge + '</td>'
+        + '<td style="text-align:center">' + amarillasDisplay + '</td>'
+        + '<td style="text-align:center">' + rojasDisplay + '</td>'
+        + '<td style="font-size:12px;color:' + suspColor + '">' + (esSuspendido ? suspension : '-') + '</td>'
+        + '</tr>';
     }).join('');
   }
 
