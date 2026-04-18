@@ -2564,8 +2564,10 @@
       <!-- TARJETAS -->
       <div class="admin-section" id="admin-tarjetas">
         <div class="admin-section-title">Tarjetas</div>
+
+        <!-- REGISTRAR TARJETA POR FECHA -->
         <div class="admin-card">
-          <h3>Registrar tarjeta</h3>
+          <h3>Registrar tarjeta por fecha</h3>
           <div class="success-msg" id="msg-tarjeta">✅ Tarjeta registrada.</div>
           <div class="form-row">
             <div class="form-group">
@@ -2590,32 +2592,37 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Partido / Fecha</label>
-              <input type="text" id="tarjeta-partido" placeholder="Ej: Fecha 2">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Fecha del partido</label>
-              <input type="date" id="tarjeta-fecha">
-            </div>
-            <div class="form-group">
-              <label>Fecha suspensión hasta (si hay expulsión)</label>
-              <input type="date" id="tarjeta-suspension">
+              <label>Fecha del torneo</label>
+              <select id="tarjeta-fecha-torneo">
+                <option value="Fecha 1">Fecha 1</option>
+                <option value="Fecha 2">Fecha 2</option>
+                <option value="Fecha 3">Fecha 3</option>
+                <option value="Fecha 4">Fecha 4</option>
+                <option value="Fecha 5">Fecha 5</option>
+                <option value="Fecha 6">Fecha 6</option>
+                <option value="Fecha 7">Fecha 7</option>
+                <option value="Semifinal">Semifinal</option>
+                <option value="Final">Final</option>
+              </select>
             </div>
           </div>
           <div class="form-group">
             <label>Motivo / Observaciones (opcional)</label>
             <input type="text" id="tarjeta-motivo" placeholder="Ej: Doble amarilla, conducta violenta...">
           </div>
+          <div style="background:rgba(234,179,8,0.06);border:1px solid rgba(234,179,8,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--texto-dim)">
+            🟥 <strong style="color:#fca5a5">Roja</strong> = 1 fecha de suspensión automática &nbsp;|&nbsp; 🟨 <strong style="color:#fde047">3 amarillas</strong> = 1 fecha de suspensión (el contador se reinicia por jugador, no por equipo)
+          </div>
           <button class="btn-small verde" onclick="agregarTarjeta()">+ Registrar Tarjeta</button>
         </div>
+
+        <!-- TABLA DE TARJETAS POR JUGADOR Y FECHA -->
         <div class="admin-card">
-          <h3>Tarjetas registradas</h3>
-          <table class="admin-table">
-            <thead><tr><th>Jugador</th><th>Equipo</th><th>Tipo</th><th>Partido</th><th>Fecha</th><th>Suspensión hasta</th><th>Motivo</th><th>Acciones</th></tr></thead>
-            <tbody id="tabla-tarjetas-admin"></tbody>
-          </table>
+          <h3>Tarjetas por jugador y fecha</h3>
+          <p style="color:var(--texto-dim);font-size:12px;margin-bottom:14px">Hacé clic en cualquier celda para editarla directamente. 🟥 Roja · 🟨 Amarilla — el contador de amarillas se reinicia al llegar a 3.</p>
+          <div id="tabla-tarjetas-admin-wrap" style="overflow-x:auto">
+            <div id="tabla-tarjetas-admin"></div>
+          </div>
         </div>
       </div>
 
@@ -2909,7 +2916,6 @@ const ESCUELAS = [
   { id: 'esc-4121',   nombre: 'Esc. 4-121 Técnicos Mendocinos',    logo: IMGS.e4121 },
   { id: 'esc-4111',   nombre: 'Esc. 4-111 Ing. Pablo Nogues',      logo: IMGS.e4111 },
   { id: 'esc-4022',   nombre: 'Esc. 4-022 Enrrique Mosconi',       logo: IMGS.e4022 },
-  { id: 'esc-4053',   nombre: 'Esc. 4-053 Dr. Horacio Leanez',     logo: IMGS.e4053 },
   { id: 'esc-4104',   nombre: 'Esc. 4-104 Ing. Carlos Fader',      logo: IMGS.e4104 },
   { id: 'esc-4039',   nombre: 'Esc. 4-039 Cruz de Piedra',         logo: IMGS.e4039 },
   { id: 'esc-4108',   nombre: 'Esc. 4-108 Ing. Guillermo Villanueva', logo: IMGS.e4108 },
@@ -4723,13 +4729,13 @@ function tarjetaEquipoChange() {
   const sel = document.getElementById('tarjeta-jugador-sel');
   const jugadores = (DATA.jugadores || []).filter(j => j.equipoId === equipoId);
   if (!equipoId) {
-    sel.innerHTML = '<option value="">— Seleccioná equipo primero —</option>';
+    sel.innerHTML = '<option value="">\u2014 Seleccion\u00e1 equipo primero \u2014</option>';
     document.getElementById('tarjeta-jugador-wrap').style.display = 'none';
     return;
   }
   sel.innerHTML = jugadores.length
-    ? jugadores.map(j => `<option value="${j.nombre}">${j.nombre}</option>`).join('') + '<option value="__otro__">✏ Otro jugador...</option>'
-    : '<option value="__otro__">✏ Ingresar nombre manualmente</option>';
+    ? jugadores.map(j => `<option value="${j.nombre}">${j.nombre}</option>`).join('') + '<option value="__otro__">\u270f Otro jugador...</option>'
+    : '<option value="__otro__">\u270f Ingresar nombre manualmente</option>';
   document.getElementById('tarjeta-jugador-wrap').style.display =
     sel.value === '__otro__' ? 'block' : 'none';
 }
@@ -4739,22 +4745,54 @@ function tarjetaJugadorChange() {
   document.getElementById('tarjeta-jugador-wrap').style.display = val === '__otro__' ? 'block' : 'none';
 }
 
+// Obtiene las tarjetas de un jugador con contador de amarillas activas
+// Retorna: { amarillasPorFecha: {Fecha1: 1, ...}, rojasPorFecha: {Fecha1: 1, ...}, amarillasActivas, suspensionPorAmarillas, suspensionPorRoja }
+function getTarjetasJugador(jugador, equipoId) {
+  const tarjetas = (DATA.tarjetas || []).filter(t => t.jugador === jugador && t.equipoId === equipoId);
+  // Sort by fecha torneo order
+  const ordenFecha = (f) => {
+    const m = String(f).match(/Fecha (\d+)/i);
+    if (m) return parseInt(m[1]);
+    if (f === 'Semifinal') return 100;
+    if (f === 'Final') return 101;
+    return 99;
+  };
+  tarjetas.sort((a, b) => ordenFecha(a.fechaTorneo) - ordenFecha(b.fechaTorneo));
+
+  const amarillasPorFecha = {};
+  const rojasPorFecha = {};
+  tarjetas.forEach(t => {
+    const f = t.fechaTorneo || 'Sin fecha';
+    if (t.tipo === 'amarilla') amarillasPorFecha[f] = (amarillasPorFecha[f] || 0) + 1;
+    if (t.tipo === 'roja') rojasPorFecha[f] = (rojasPorFecha[f] || 0) + 1;
+  });
+
+  // Calcular amarillas activas (reinicia cada 3)
+  let count = 0, suspensionesAmarillas = 0;
+  tarjetas.filter(t => t.tipo === 'amarilla').forEach(t => {
+    count++;
+    if (count >= 3) { suspensionesAmarillas++; count = 0; }
+  });
+
+  const totalRojas = Object.values(rojasPorFecha).reduce((s, n) => s + n, 0);
+
+  return { amarillasPorFecha, rojasPorFecha, amarillasActivas: count, suspensionesAmarillas, totalRojas };
+}
+
 function agregarTarjeta() {
   const equipoId = document.getElementById('tarjeta-equipo').value;
   const jugadorSel = document.getElementById('tarjeta-jugador-sel').value;
   const tipo = document.getElementById('tarjeta-tipo').value;
-  const partido = document.getElementById('tarjeta-partido').value.trim();
-  const fecha = document.getElementById('tarjeta-fecha').value;
-  const suspension = document.getElementById('tarjeta-suspension').value;
+  const fechaTorneo = document.getElementById('tarjeta-fecha-torneo').value;
   const motivo = document.getElementById('tarjeta-motivo').value.trim();
 
-  if (!equipoId) { alert('Seleccioná un equipo'); return; }
-  if (!jugadorSel) { alert('Seleccioná un jugador'); return; }
+  if (!equipoId) { alert('Seleccion\u00e1 un equipo'); return; }
+  if (!jugadorSel) { alert('Seleccion\u00e1 un jugador'); return; }
 
   let jugador = '';
   if (jugadorSel === '__otro__') {
     jugador = document.getElementById('tarjeta-jugador').value.trim();
-    if (!jugador) { alert('Ingresá el nombre del jugador'); return; }
+    if (!jugador) { alert('Ingres\u00e1 el nombre del jugador'); return; }
   } else {
     jugador = jugadorSel;
   }
@@ -4762,108 +4800,215 @@ function agregarTarjeta() {
   const eq = DATA.equipos.find(e => e.id === equipoId);
   if (!DATA.tarjetas) DATA.tarjetas = [];
 
-  // Calcular suspensión automática
-  let suspAuto = suspension; // la del campo manual tiene prioridad
-  if (!suspension) {
-    if (tipo === 'roja') {
-      // Tarjeta roja = 1 fecha de suspensión
-      suspAuto = 'SUSP-ROJA-1-FECHA';
-    } else if (tipo === 'amarilla') {
-      // Contar amarillas activas del jugador (se reinician cada 3)
-      const amarillasPrev = (DATA.tarjetas || []).filter(
-        t => t.jugador === jugador && t.equipoId === equipoId && t.tipo === 'amarilla'
-      );
-      let cuentaActiva = 0;
-      amarillasPrev.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
-      amarillasPrev.forEach(t => {
-        cuentaActiva++;
-        if (cuentaActiva >= 3) cuentaActiva = 0;
-      });
-      // La nueva amarilla es la número cuentaActiva+1
-      if (cuentaActiva + 1 >= 3) {
-        suspAuto = 'SUSP-AMARILLAS-1-FECHA';
-      }
+  // Calcular suspensión automática ANTES de agregar la nueva tarjeta
+  let suspension = '';
+  if (tipo === 'roja') {
+    suspension = 'SUSP-ROJA-1-FECHA';
+  } else if (tipo === 'amarilla') {
+    const info = getTarjetasJugador(jugador, equipoId);
+    // La nueva amarilla sería info.amarillasActivas + 1
+    if (info.amarillasActivas + 1 >= 3) {
+      suspension = 'SUSP-AMARILLAS-1-FECHA';
     }
   }
 
-  DATA.tarjetas.push({ id: Date.now().toString(), jugador, equipoId, equipo: eq ? eq.nombre : '', tipo, partido, fecha, suspension: suspAuto, motivo });
+  DATA.tarjetas.push({
+    id: Date.now().toString(),
+    jugador, equipoId, equipo: eq ? eq.nombre : '',
+    tipo, fechaTorneo, motivo, suspension
+  });
   saveData();
   showMsg('msg-tarjeta');
   document.getElementById('tarjeta-equipo').value = '';
-  document.getElementById('tarjeta-jugador-sel').innerHTML = '<option value="">— Seleccioná equipo primero —</option>';
+  document.getElementById('tarjeta-jugador-sel').innerHTML = '<option value="">\u2014 Seleccion\u00e1 equipo primero \u2014</option>';
   document.getElementById('tarjeta-jugador-wrap').style.display = 'none';
   document.getElementById('tarjeta-jugador').value = '';
   document.getElementById('tarjeta-tipo').value = 'amarilla';
-  document.getElementById('tarjeta-partido').value = '';
-  document.getElementById('tarjeta-fecha').value = '';
-  document.getElementById('tarjeta-suspension').value = '';
   document.getElementById('tarjeta-motivo').value = '';
   renderAdminTarjetas();
   renderTarjetasPublic();
 }
 
+// Editar tarjetas de un jugador en una fecha específica por tipo
+function editarTarjetaFecha(jugador, equipoId, fechaTorneo, tipo) {
+  const tarjetas = (DATA.tarjetas || []).filter(t => t.jugador === jugador && t.equipoId === equipoId && t.tipo === tipo && (t.fechaTorneo || 'Sin fecha') === fechaTorneo);
+  const actual = tarjetas.length;
+  const emoji = tipo === 'roja' ? '\ud83d\udfe5' : '\ud83d\udfe8';
+  const nuevo = prompt(emoji + ' Tarjetas ' + tipo + 's de ' + jugador + ' en ' + fechaTorneo + ' (actual: ' + actual + ')\nIngres\u00e1 0 para borrar:', actual);
+  if (nuevo === null) return;
+  const val = parseInt(nuevo);
+  if (isNaN(val) || val < 0) { alert('Valor inv\u00e1lido'); return; }
+
+  // Borrar las tarjetas actuales de ese jugador/equipo/fecha/tipo
+  DATA.tarjetas = (DATA.tarjetas || []).filter(t => !(t.jugador === jugador && t.equipoId === equipoId && t.tipo === tipo && (t.fechaTorneo || 'Sin fecha') === fechaTorneo));
+
+  // Agregar las nuevas (val cantidad)
+  const eq = DATA.equipos.find(e => e.id === equipoId);
+  for (let i = 0; i < val; i++) {
+    DATA.tarjetas.push({
+      id: (Date.now() + i).toString(),
+      jugador, equipoId, equipo: eq ? eq.nombre : '',
+      tipo, fechaTorneo: fechaTorneo === 'Sin fecha' ? '' : fechaTorneo,
+      motivo: '', suspension: ''
+    });
+  }
+
+  // Recalcular suspensiones automáticas para este jugador
+  recalcSuspensiones(jugador, equipoId);
+
+  saveData();
+  renderAdminTarjetas();
+  renderTarjetasPublic();
+}
+
+// Recalcula y actualiza el campo suspension en todas las tarjetas de amarillas de un jugador
+function recalcSuspensiones(jugador, equipoId) {
+  const amarillas = (DATA.tarjetas || []).filter(t => t.jugador === jugador && t.equipoId === equipoId && t.tipo === 'amarilla');
+  const ordenFecha = (f) => {
+    const m = String(f || '').match(/Fecha (\d+)/i);
+    if (m) return parseInt(m[1]);
+    if (f === 'Semifinal') return 100;
+    if (f === 'Final') return 101;
+    return 99;
+  };
+  amarillas.sort((a, b) => ordenFecha(a.fechaTorneo) - ordenFecha(b.fechaTorneo));
+  let count = 0;
+  amarillas.forEach(t => {
+    count++;
+    if (count >= 3) { t.suspension = 'SUSP-AMARILLAS-1-FECHA'; count = 0; }
+    else { t.suspension = ''; }
+  });
+}
+
 function renderAdminTarjetas() {
-  const tb = document.getElementById('tabla-tarjetas-admin');
-  if (!tb) return;
-  const tarjetas = DATA.tarjetas || [];
-  if (!tarjetas.length) { tb.innerHTML = '<tr><td colspan="8" class="empty-state">Sin tarjetas registradas.</td></tr>'; return; }
-  const sorted = [...tarjetas].sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
-  tb.innerHTML = sorted.map(t => {
-    const tipoBadge = t.tipo === 'roja'
-      ? `<span style="display:inline-block;width:14px;height:20px;background:#ef4444;border-radius:2px;vertical-align:middle"></span> Roja`
-      : `<span style="display:inline-block;width:14px;height:20px;background:#eab308;border-radius:2px;vertical-align:middle"></span> Amarilla`;
-    const fechaFmt = t.fecha ? t.fecha.split('-').reverse().join('/') : '-';
-    const suspFmt = t.suspension ? t.suspension.split('-').reverse().join('/') : '-';
-    return `<tr>
-      <td><strong style="color:white">${t.jugador}</strong></td>
-      <td>${t.equipo || '-'}</td>
-      <td>${tipoBadge}</td>
-      <td>${t.partido || '-'}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:12px">${fechaFmt}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:12px;${t.suspension && t.suspension.startsWith('SUSP') ? 'color:#ef4444' : (t.tipo === 'roja' ? 'color:#ef4444' : '')}">${t.suspension && t.suspension.startsWith('SUSP') ? (t.suspension === 'SUSP-ROJA-1-FECHA' ? '1 fecha (roja)' : t.suspension === 'SUSP-AMARILLAS-1-FECHA' ? '1 fecha (3 amarillas)' : suspFmt) : (t.tipo === 'roja' && suspFmt !== '-' ? suspFmt : '-')}</td>
-      <td style="font-size:12px;color:var(--texto-dim)">${t.motivo || '-'}</td>
-      <td><button class="btn-small rojo" onclick="borrarTarjeta('${t.id}')">Borrar</button></td>
-    </tr>`;
+  const wrap = document.getElementById('tabla-tarjetas-admin');
+  if (!wrap) return;
+
+  if (!(DATA.tarjetas || []).length) {
+    wrap.innerHTML = '<p style="color:var(--texto-dim);font-size:13px">Sin tarjetas registradas.</p>';
+    return;
+  }
+
+  // Migrar tarjetas viejas que no tienen fechaTorneo
+  (DATA.tarjetas || []).forEach(t => {
+    if (!t.fechaTorneo) {
+      t.fechaTorneo = t.partido || 'Sin fecha';
+    }
+  });
+
+  // Recopilar todos los jugadores con tarjetas
+  const jugadoresMap = {};
+  (DATA.tarjetas || []).forEach(t => {
+    const key = t.jugador + '||' + t.equipoId;
+    if (!jugadoresMap[key]) jugadoresMap[key] = { jugador: t.jugador, equipoId: t.equipoId, equipo: t.equipo };
+  });
+
+  if (!Object.keys(jugadoresMap).length) {
+    wrap.innerHTML = '<p style="color:var(--texto-dim);font-size:13px">Sin tarjetas registradas.</p>';
+    return;
+  }
+
+  const FECHAS = ['Fecha 1','Fecha 2','Fecha 3','Fecha 4','Fecha 5','Fecha 6','Fecha 7','Semifinal','Final'];
+
+  let html = '<table class="admin-table" style="min-width:900px"><thead><tr>';
+  html += '<th style="text-align:left">Jugador</th><th>Equipo</th>';
+  FECHAS.forEach(f => { html += '<th style="text-align:center;font-size:10px">' + f + '</th>'; });
+  html += '<th style="text-align:center">Total<br><small style="font-size:9px">🟨/🟥</small></th><th>Suspensión</th><th>Acciones</th></tr></thead><tbody>';
+
+  const rows = Object.values(jugadoresMap).sort((a, b) => {
+    const infoA = getTarjetasJugador(a.jugador, a.equipoId);
+    const infoB = getTarjetasJugador(b.jugador, b.equipoId);
+    return (infoB.totalRojas * 100 + Object.values(infoB.amarillasPorFecha).reduce((s,n)=>s+n,0)) - (infoA.totalRojas * 100 + Object.values(infoA.amarillasPorFecha).reduce((s,n)=>s+n,0));
+  });
+
+  html += rows.map(r => {
+    const info = getTarjetasJugador(r.jugador, r.equipoId);
+    let row = '<tr>';
+    row += '<td><strong style="color:white">' + r.jugador + '</strong></td>';
+    row += '<td style="font-size:12px">' + (r.equipo || '-') + '</td>';
+
+    FECHAS.forEach(f => {
+      const am = info.amarillasPorFecha[f] || 0;
+      const ro = info.rojasPorFecha[f] || 0;
+      let cellContent = '';
+      let cellStyle = 'text-align:center;cursor:pointer;';
+      if (am > 0 || ro > 0) {
+        cellContent = (ro > 0 ? '<span style="color:#fca5a5;font-weight:700">🟥' + (ro > 1 ? 'x' + ro : '') + '</span>' : '') +
+                      (am > 0 && ro > 0 ? '<br>' : '') +
+                      (am > 0 ? '<span style="color:#fde047;font-weight:700">🟨' + (am > 1 ? 'x' + am : '') + '</span>' : '');
+        cellStyle += 'background:rgba(239,68,68,0.08);border-radius:4px;';
+      } else {
+        cellContent = '<span style="color:var(--texto-dim);font-size:11px">—</span>';
+      }
+      row += '<td style="' + cellStyle + '" onclick="abrirEditarTarjetaCelda('' + encodeURIComponent(r.jugador) + '','' + r.equipoId + '','' + f + '')" title="Clic para editar">' + cellContent + '</td>';
+    });
+
+    // Extras (Sin fecha)
+    const amEx = info.amarillasPorFecha['Sin fecha'] || 0;
+    const roEx = info.rojasPorFecha['Sin fecha'] || 0;
+
+    const totalAm = Object.values(info.amarillasPorFecha).reduce((s,n)=>s+n,0);
+    const totalRo = info.totalRojas;
+    row += '<td style="text-align:center;font-size:13px">';
+    if (totalAm > 0) row += '<span style="color:#fde047;font-weight:700">🟨' + totalAm + '</span> ';
+    if (totalRo > 0) row += '<span style="color:#fca5a5;font-weight:700">🟥' + totalRo + '</span>';
+    if (!totalAm && !totalRo) row += '<span style="color:var(--texto-dim)">—</span>';
+    row += '</td>';
+
+    // Suspensión
+    const esSusp = info.totalRojas > 0 || info.suspensionesAmarillas > 0;
+    const suspTxt = esSusp ? (info.suspensionesAmarillas > 0 && info.totalRojas > 0 ? info.suspensionesAmarillas + 'f(am) + ' + info.totalRojas + 'f(roja)' : info.totalRojas > 0 ? info.totalRojas + ' fecha(s)' : info.suspensionesAmarillas + ' fecha(s)') : '-';
+    const suspColor = esSusp ? '#ef4444' : 'var(--texto-dim)';
+    row += '<td style="font-size:12px;color:' + suspColor + (esSusp ? ';font-weight:700' : '') + '">' + suspTxt + '</td>';
+
+    row += '<td><button class="btn-small rojo" onclick="borrarTarjetasJugador(' + "'" + encodeURIComponent(r.jugador) + "','" + r.equipoId + "'" + ')">Borrar todo</button></td>';
+    row += '</tr>';
+    return row;
   }).join('');
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function abrirEditarTarjetaCelda(jugadorEnc, equipoId, fechaTorneo) {
+  const jugador = decodeURIComponent(jugadorEnc);
+  const am = ((DATA.tarjetas||[]).filter(t => t.jugador===jugador && t.equipoId===equipoId && t.tipo==='amarilla' && (t.fechaTorneo||'Sin fecha')===fechaTorneo)).length;
+  const ro = ((DATA.tarjetas||[]).filter(t => t.jugador===jugador && t.equipoId===equipoId && t.tipo==='roja' && (t.fechaTorneo||'Sin fecha')===fechaTorneo)).length;
+
+  const opcion = prompt(
+    '\u270f Editar tarjetas de ' + jugador + ' en ' + fechaTorneo + '\n' +
+    'Actual: \ud83d\udfe8 ' + am + ' amarilla(s)  \ud83d\udfe5 ' + ro + ' roja(s)\n\n' +
+    'Escribi qu\u00e9 tipo editar:\n  A = amarillas\n  R = rojas'
+  );
+  if (!opcion) return;
+  if (opcion.trim().toUpperCase() === 'A') {
+    editarTarjetaFecha(jugador, equipoId, fechaTorneo, 'amarilla');
+  } else if (opcion.trim().toUpperCase() === 'R') {
+    editarTarjetaFecha(jugador, equipoId, fechaTorneo, 'roja');
+  } else {
+    alert('Escrib\u00ed A para amarillas o R para rojas');
+  }
+}
+
+function borrarTarjetasJugador(jugadorEnc, equipoId) {
+  const jugador = decodeURIComponent(jugadorEnc);
+  if (!confirm('\u00bfBorrar todas las tarjetas de ' + jugador + '?')) return;
+  DATA.tarjetas = (DATA.tarjetas || []).filter(t => !(t.jugador === jugador && t.equipoId === equipoId));
+  saveData(); renderAdminTarjetas(); renderTarjetasPublic();
 }
 
 function borrarTarjeta(id) {
-  if (!confirm('¿Borrar esta tarjeta?')) return;
+  if (!confirm('\u00bfBorrar esta tarjeta?')) return;
   DATA.tarjetas = (DATA.tarjetas || []).filter(t => t.id !== id);
   saveData(); renderAdminTarjetas(); renderTarjetasPublic();
 }
 
 // ===== HELPERS DE TARJETAS =====
 
-// Calcula amarillas "activas" del jugador (se reinician al llegar a 3 y cumplir suspensión)
+// getAmarillasActivas kept for backward compat (used in verTarjetasEquipo)
 function getAmarillasActivas(jugador, equipoId) {
-  const tarjetas = (DATA.tarjetas || []).filter(t => t.jugador === jugador && t.equipoId === equipoId && t.tipo === 'amarilla');
-  tarjetas.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
-  let count = 0;
-  tarjetas.forEach(t => {
-    count++;
-    if (count >= 3) count = 0; // Al llegar a 3, reiniciar
-  });
-  return count;
-}
-
-// Calcula suspensión automática por tarjetas
-function calcSuspensionAuto(jugador, equipoId, tipo, fechaTarjeta) {
-  // Para tarjeta roja: 1 fecha de suspensión (marcada como 'auto-roja')
-  if (tipo === 'roja') return 'SUSP-1-FECHA';
-  // Para amarillas: verificar si llega a 3
-  const amarillasAnteriores = (DATA.tarjetas || []).filter(
-    t => t.jugador === jugador && t.equipoId === equipoId && t.tipo === 'amarilla' && t.id !== 'NEW'
-  );
-  amarillasAnteriores.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
-  let count = 0;
-  amarillasAnteriores.forEach(t => {
-    count++;
-    if (count >= 3) count = 0;
-  });
-  // La nueva amarilla sería count+1
-  if (count + 1 >= 3) return 'SUSP-1-FECHA'; // llega a 3 → suspensión
-  return ''; // no llega a 3
+  const info = getTarjetasJugador(jugador, equipoId);
+  return info.amarillasActivas;
 }
 
 function renderTarjetasPublic() {
@@ -4871,7 +5016,7 @@ function renderTarjetasPublic() {
   if (!tbEquipos) return;
   const tarjetas = DATA.tarjetas || [];
   if (!tarjetas.length) {
-    tbEquipos.innerHTML = '<tr><td colspan="4" class="empty-state"><span class="icon">🟨</span>Sin tarjetas registradas.</td></tr>';
+    tbEquipos.innerHTML = '<tr><td colspan="4" class="empty-state"><span class="icon">\ud83d\udfe8</span>Sin tarjetas registradas.</td></tr>';
     return;
   }
 
@@ -4893,15 +5038,15 @@ function renderTarjetasPublic() {
       : '';
     const amarillasDisplay = eq.amarillasTotales > 0
       ? `<span style="background:rgba(234,179,8,0.15);border:1px solid rgba(234,179,8,0.4);color:#fde047;font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;padding:2px 14px;border-radius:8px">${eq.amarillasTotales}</span>`
-      : '<span style="color:var(--texto-dim);font-size:12px">—</span>';
+      : '<span style="color:var(--texto-dim);font-size:12px">\u2014</span>';
     const rojasDisplay = eq.rojas > 0
       ? `<span style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;padding:2px 14px;border-radius:8px">${eq.rojas}</span>`
-      : '<span style="color:var(--texto-dim);font-size:12px">—</span>';
+      : '<span style="color:var(--texto-dim);font-size:12px">\u2014</span>';
     return '<tr style="cursor:pointer" onclick="verTarjetasEquipo(\'' + eq.equipoId + '\')" title="Ver jugadores de ' + (eq.equipo||'') + '">'
       + '<td><div style="display:flex;align-items:center">' + logoHtml + '<strong style="color:white">' + (eq.equipo || '-') + '</strong></div></td>'
       + '<td style="text-align:center">' + amarillasDisplay + '</td>'
       + '<td style="text-align:center">' + rojasDisplay + '</td>'
-      + '<td style="text-align:center"><span style="color:#22c55e;font-size:12px">Ver →</span></td>'
+      + '<td style="text-align:center"><span style="color:#22c55e;font-size:12px">Ver \u2192</span></td>'
       + '</tr>';
   }).join('');
 }
@@ -4915,55 +5060,55 @@ function verTarjetasEquipo(equipoId) {
     nombreEl.innerHTML = logoHtml + (eq ? eq.nombre : '-');
   }
 
-  // Agrupar por jugador
-  const porJugador = {};
-  tarjetas.forEach(function(t) {
-    if (!porJugador[t.jugador]) porJugador[t.jugador] = { jugador: t.jugador, equipoId: t.equipoId, amarillasTotal: 0, amarillasActivas: 0, rojas: 0, suspensiones: [] };
-    if (t.tipo === 'amarilla') porJugador[t.jugador].amarillasTotal++;
-    if (t.tipo === 'roja') {
-      porJugador[t.jugador].rojas++;
-      if (t.suspension) porJugador[t.jugador].suspensiones.push(t.suspension);
-    }
-  });
+  // Agrupar por jugador y calcular con la nueva lógica
+  const jugadoresSet = [...new Set(tarjetas.map(t => t.jugador))];
 
-  // Calcular amarillas activas para cada jugador
-  Object.keys(porJugador).forEach(function(jugador) {
-    porJugador[jugador].amarillasActivas = getAmarillasActivas(jugador, equipoId);
-  });
+  const rows = jugadoresSet.map(jugador => {
+    const info = getTarjetasJugador(jugador, equipoId);
+    const totalAm = Object.values(info.amarillasPorFecha).reduce((s,n)=>s+n,0);
 
-  const rows = Object.values(porJugador).sort(function(a, b){ return (b.rojas * 10 + b.amarillasTotal) - (a.rojas * 10 + a.amarillasTotal); });
+    // Construir badges por fecha (solo fechas con tarjetas)
+    const FECHAS = ['Fecha 1','Fecha 2','Fecha 3','Fecha 4','Fecha 5','Fecha 6','Fecha 7','Semifinal','Final','Sin fecha'];
+    const badges = FECHAS.filter(f => (info.amarillasPorFecha[f]||0) > 0 || (info.rojasPorFecha[f]||0) > 0)
+      .map(f => {
+        let b = '<span style="font-family:'DM Mono',monospace;font-size:10px;background:rgba(0,0,0,0.3);border-radius:4px;padding:1px 5px">' + f + ': ';
+        if ((info.rojasPorFecha[f]||0) > 0) b += '\ud83d\udfe5' + (info.rojasPorFecha[f] > 1 ? 'x'+info.rojasPorFecha[f] : '');
+        if ((info.amarillasPorFecha[f]||0) > 0) b += (info.rojasPorFecha[f] ? ' ' : '') + '\ud83d\udfe8' + (info.amarillasPorFecha[f] > 1 ? 'x'+info.amarillasPorFecha[f] : '');
+        b += '</span>';
+        return b;
+      }).join(' ');
+
+    const esSuspendido = info.totalRojas > 0 || info.suspensionesAmarillas > 0;
+    const suspBadge = esSuspendido ? ' <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:1px 6px">SUSP</span>' : '';
+    const nameColor = esSuspendido ? '#fca5a5' : 'white';
+
+    // Tarjetas visuales (activas)
+    const amarillasHTML = Array(info.amarillasActivas).fill('<span class="tarjeta-amarilla"></span>').join('');
+    const rojasHTML = Array(info.totalRojas).fill('<span class="tarjeta-roja"></span>').join('');
+
+    const suspTxt = esSuspendido ? (info.suspensionesAmarillas > 0 && info.totalRojas > 0 ? info.suspensionesAmarillas + 'f (am) + ' + info.totalRojas + 'f (roja)' : info.totalRojas > 0 ? info.totalRojas + ' fecha(s) roja' : info.suspensionesAmarillas + ' fecha(s) amarillas') : '-';
+
+    return {
+      jugador, totalAm, totalRojas: info.totalRojas, esSuspendido,
+      html: '<tr>'
+        + '<td><strong style="color:' + nameColor + '">' + jugador + '</strong>' + suspBadge
+        + (badges ? '<br><div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">' + badges + '</div>' : '')
+        + '</td>'
+        + '<td style="text-align:center">' + (totalAm > 0 ? amarillasHTML + (info.amarillasActivas < totalAm ? '<small style="color:#8fa68f;font-size:10px;margin-left:4px">(' + totalAm + ' total)</small>' : '') : '<span style="color:#8fa68f;font-size:12px">-</span>') + '</td>'
+        + '<td style="text-align:center">' + (info.totalRojas > 0 ? rojasHTML : '<span style="color:#8fa68f;font-size:12px">-</span>') + '</td>'
+        + '<td style="font-size:12px;color:' + (esSuspendido ? '#ef4444' : '#8fa68f') + '">' + suspTxt + '</td>'
+        + '</tr>'
+    };
+  }).sort((a, b) => (b.totalRojas * 10 + b.totalAm) - (a.totalRojas * 10 + a.totalAm));
+
   const tb = document.getElementById('tarjetas-body-detalle');
   if (!tb) return;
-
   if (!rows.length) {
     tb.innerHTML = '<tr><td colspan="4" class="empty-state">Sin tarjetas para este equipo.</td></tr>';
   } else {
-    tb.innerHTML = rows.map(function(r) {
-      const amarillasHTML = Array(r.amarillasActivas).fill('<span class="tarjeta-amarilla"></span>').join('');
-      const countTxt = (r.amarillasTotal !== r.amarillasActivas) ? '<small style="color:#8fa68f;font-size:10px;margin-left:4px">(' + r.amarillasTotal + ')</small>' : '';
-      const amarillasDisplay = r.amarillasTotal > 0
-        ? '<span>' + (amarillasHTML || '<span style="color:#8fa68f;font-size:11px">-</span>') + countTxt + '</span>'
-        : '<span style="color:#8fa68f;font-size:12px">-</span>';
-      const rojasDisplay = r.rojas > 0
-        ? Array(r.rojas).fill('<span class="tarjeta-roja"></span>').join('')
-        : '<span style="color:#8fa68f;font-size:12px">-</span>';
-      const suspension = r.suspensiones.length
-        ? r.suspensiones.sort().reverse()[0].split('-').reverse().join('/')
-        : (r.rojas > 0 ? '1 fecha' : '-');
-      const esSuspendido = r.rojas > 0 || Math.floor(r.amarillasTotal / 3) > 0;
-      const suspBadge = esSuspendido ? ' <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:1px 6px">SUSP</span>' : '';
-      const nameColor = esSuspendido ? '#fca5a5' : 'white';
-      const suspColor = esSuspendido ? '#ef4444' : '#8fa68f';
-      return '<tr>'
-        + '<td><strong style="color:' + nameColor + '">' + r.jugador + '</strong>' + suspBadge + '</td>'
-        + '<td style="text-align:center">' + amarillasDisplay + '</td>'
-        + '<td style="text-align:center">' + rojasDisplay + '</td>'
-        + '<td style="font-size:12px;color:' + suspColor + '">' + (esSuspendido ? suspension : '-') + '</td>'
-        + '</tr>';
-    }).join('');
+    tb.innerHTML = rows.map(r => r.html).join('');
   }
 
-  // Mostrar vista detalle
   document.getElementById('tarjetas-equipos-view').style.display = 'none';
   document.getElementById('tarjetas-detalle-view').style.display = 'block';
 }
@@ -5261,7 +5406,6 @@ function capBorrarJugador(id) {
 loadData(); // carga localStorage mientras Firebase conecta
 const hoy = new Date().toISOString().split('T')[0];
 document.getElementById('noticia-fecha').value = hoy;
-document.getElementById('tarjeta-fecha').value = hoy;
 const jugEquipoSel = document.getElementById('jugador-equipo');
 if (jugEquipoSel) jugEquipoSel.addEventListener('change', checkDJWarning);
 initFirebase(); // conecta Firebase y reemplaza datos con los de la nube
