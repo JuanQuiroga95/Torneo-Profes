@@ -1466,9 +1466,11 @@
     .gol-bar-wrap { display: none; }
     .partido-lugar { display: none; }
     .partido-meta { min-width: 50px; }
-    .partido-card { padding: 12px 10px; gap: 8px; }
-    .partido-equipo { font-size: 12px; }
-    .partido-score { font-size: 18px; padding: 6px 10px; min-width: 70px; letter-spacing: 2px; }
+    .partido-card { padding: 12px 10px; gap: 8px; overflow: hidden; }
+    .partido-equipo { font-size: 12px; white-space: normal; word-break: break-word; }
+    .partido-score { font-size: 18px; padding: 6px 10px; min-width: 70px; letter-spacing: 2px; flex-shrink: 0; }
+    .partido-equipo-wrap { min-width: 0; flex: 1; }
+    .partido-logo { width: 28px; height: 28px; }
 
     /* Tablas scrolleables horizontalmente */
     .tabla-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1747,9 +1749,12 @@
 
   /* ===== PARTIDO equipo con logo ===== */
   .partido-equipo-wrap {
-    display: flex; align-items: center; gap: 8px; flex: 1;
+    display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
   }
   .partido-equipo-wrap.derecha { flex-direction: row-reverse; text-align: right; }
+  .partido-equipo-wrap .partido-equipo {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis;
+  }
   .partido-logo {
     width: 36px; height: 36px; object-fit: contain; flex-shrink: 0;
     border-radius: 6px;
