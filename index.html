@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Copa PER.EDU — El Torneo de los Profes</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- Database Integration (PostgreSQL API) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
@@ -1466,11 +1464,9 @@
     .gol-bar-wrap { display: none; }
     .partido-lugar { display: none; }
     .partido-meta { min-width: 50px; }
-    .partido-card { padding: 12px 10px; gap: 8px; overflow: hidden; }
-    .partido-equipo { font-size: 12px; white-space: normal; word-break: break-word; }
-    .partido-score { font-size: 18px; padding: 6px 10px; min-width: 70px; letter-spacing: 2px; flex-shrink: 0; }
-    .partido-equipo-wrap { min-width: 0; flex: 1; }
-    .partido-logo { width: 28px; height: 28px; }
+    .partido-card { padding: 12px 10px; gap: 8px; }
+    .partido-equipo { font-size: 12px; }
+    .partido-score { font-size: 18px; padding: 6px 10px; min-width: 70px; letter-spacing: 2px; }
 
     /* Tablas scrolleables horizontalmente */
     .tabla-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1749,12 +1745,9 @@
 
   /* ===== PARTIDO equipo con logo ===== */
   .partido-equipo-wrap {
-    display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+    display: flex; align-items: center; gap: 8px; flex: 1;
   }
   .partido-equipo-wrap.derecha { flex-direction: row-reverse; text-align: right; }
-  .partido-equipo-wrap .partido-equipo {
-    min-width: 0; overflow: hidden; text-overflow: ellipsis;
-  }
   .partido-logo {
     width: 36px; height: 36px; object-fit: contain; flex-shrink: 0;
     border-radius: 6px;
@@ -2927,130 +2920,122 @@ const ESCUELAS = [
   { id: 'esc-4109',   nombre: 'Esc. 4-109 Ing. Alvarez Condarco',  logo: IMGS.e4109 },
 ];
 
-// ===== FIREBASE CONFIG =====
-// 🔧 PASO 1: Pegá acá los datos de tu proyecto Firebase
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyBv305Vp553zSnKO_jWP8CDgIlEU77mIVg",
-  authDomain:        "copa-perdeu-2026.firebaseapp.com",
-  databaseURL:       "https://copa-perdeu-2026-default-rtdb.firebaseio.com",
-  projectId:         "copa-perdeu-2026",
-  storageBucket:     "copa-perdeu-2026.firebasestorage.app",
-  messagingSenderId: "619615422813",
-  appId:             "1:619615422813:web:54941027b7986cf18300b4"
-};
+// ===== DATABASE CONNECTIVITY (REPLACED FIREBASE WITH POSTGRES API) =====
+let databaseReady = false;
 
-// Estado de conexión
-let firebaseReady = false;
-let dbRef = null;
-
-function initFirebase() {
+async function initFirebase() {
   try {
-    // Verifica que el config esté completo
-    if (FIREBASE_CONFIG.apiKey === "TU_API_KEY") {
-      console.warn("⚠️ Firebase no configurado. Usando localStorage como respaldo.");
-      showFirebaseStatus('sin-configurar');
-      loadFromLocalStorage();
-      return;
-    }
-    firebase.initializeApp(FIREBASE_CONFIG);
-    dbRef = firebase.database().ref('torneo');
-    firebaseReady = true;
     showFirebaseStatus('conectando');
-
-    // Escucha cambios en tiempo real
-    dbRef.on('value', (snapshot) => {
-      const remoto = snapshot.val();
-      if (remoto) {
-        DATA = { ...DATA, ...remoto };
-        if (!DATA.admins || DATA.admins.length === 0) DATA.admins = [...DEFAULT_ADMINS];
-        if (!DATA.noticias) DATA.noticias = [];
-        if (!DATA.tarjetas) DATA.tarjetas = [];
-        if (!DATA.jugadores) DATA.jugadores = [];
-        // Convertir objetos Firebase a arrays (campos simples)
-        ['equipos','partidos','goleadores','tarjetas','jugadores','noticias','galeria','admins'].forEach(key => {
-          if (DATA[key] && !Array.isArray(DATA[key])) {
-            DATA[key] = Object.values(DATA[key]);
-          }
-        });
-        // FIX: convertir albums (objeto Firebase -> array) y sus fotos internas también
-        if (DATA.albums && !Array.isArray(DATA.albums)) {
-          DATA.albums = Object.values(DATA.albums).map(album => {
-            if (album.fotos && !Array.isArray(album.fotos)) {
-              album.fotos = Object.values(album.fotos);
-            } else if (!album.fotos) {
-              album.fotos = [];
-            }
-            return album;
-          });
-        } else if (!DATA.albums) {
-          DATA.albums = [];
-        } else {
-          // Ya es array pero sus fotos internas pueden ser objetos Firebase
-          DATA.albums = DATA.albums.map(album => {
-            if (album.fotos && !Array.isArray(album.fotos)) {
-              album.fotos = Object.values(album.fotos);
-            } else if (!album.fotos) {
-              album.fotos = [];
-            }
-            return album;
-          });
+    const response = await fetch('/api/get-data');
+    if (!response.ok) throw new Error('Error al obtener datos');
+    const remoto = await response.json();
+    if (remoto && Object.keys(remoto).length > 0) {
+      DATA = { ...DATA, ...remoto };
+      if (!DATA.admins || DATA.admins.length === 0) DATA.admins = [...DEFAULT_ADMINS];
+      if (!DATA.noticias) DATA.noticias = [];
+      if (!DATA.tarjetas) DATA.tarjetas = [];
+      if (!DATA.jugadores) DATA.jugadores = [];
+      // Convertir objetos a arrays (campos simples)
+      ['equipos','partidos','goleadores','tarjetas','jugadores','noticias','galeria','admins'].forEach(key => {
+        if (DATA[key] && !Array.isArray(DATA[key])) {
+          DATA[key] = Object.values(DATA[key]);
         }
+      });
+      // Convertir albums y sus fotos internas también
+      if (DATA.albums && !Array.isArray(DATA.albums)) {
+        DATA.albums = Object.values(DATA.albums).map(album => {
+          if (album.fotos && !Array.isArray(album.fotos)) {
+            album.fotos = Object.values(album.fotos);
+          } else if (!album.fotos) {
+            album.fotos = [];
+          }
+          return album;
+        });
+      } else if (!DATA.albums) {
+        DATA.albums = [];
       } else {
-        // Primera vez: subir datos iniciales
-        dbRef.set(DATA);
+        DATA.albums = DATA.albums.map(album => {
+          if (album.fotos && !Array.isArray(album.fotos)) {
+            album.fotos = Object.values(album.fotos);
+          } else if (!album.fotos) {
+            album.fotos = [];
+          }
+          return album;
+        });
       }
-      renderPublic();
-      showFirebaseStatus('conectado');
-    }, (error) => {
-      console.error("Error Firebase:", error);
-      showFirebaseStatus('error');
-      loadFromLocalStorage();
-    });
+    } else {
+      // Primera vez: subir datos iniciales
+      await saveToServer();
+    }
+    databaseReady = true;
+    renderPublic();
+    showFirebaseStatus('conectado');
   } catch(e) {
-    console.error("Error iniciando Firebase:", e);
+    console.error("Error iniciando base de datos:", e);
     showFirebaseStatus('error');
     loadFromLocalStorage();
   }
 }
 
-function saveData() {
-  if (firebaseReady && dbRef) {
-    const toSave = {};
-    // Arrays simples -> objetos Firebase
-    ['equipos','partidos','goleadores','tarjetas','jugadores','noticias','galeria','admins'].forEach(key => {
-      if (Array.isArray(DATA[key])) {
-        const obj = {};
-        DATA[key].forEach(item => { obj[item.id || ('k_' + Math.random().toString(36).slice(2))] = item; });
-        toSave[key] = obj;
-      }
-    });
-    // FIX: albums también debe guardarse, con sus fotos internas como objetos
-    if (Array.isArray(DATA.albums)) {
-      const albumsObj = {};
-      DATA.albums.forEach(album => {
-        const albumCopy = { ...album };
-        if (Array.isArray(album.fotos)) {
-          const fotosObj = {};
-          album.fotos.forEach(f => {
-            const fid = f.id || ('f_' + Math.random().toString(36).slice(2));
-            fotosObj[fid] = { ...f, id: fid };
-          });
-          albumCopy.fotos = fotosObj;
-        }
-        albumsObj[album.id] = albumCopy;
-      });
-      toSave.albums = albumsObj;
-    } else {
-      toSave.albums = {};
+// Helper to recursively find and upload base64 strings to Postgres
+async function uploadBase64s(obj) {
+  if (typeof obj !== 'object' || obj === null) return obj;
+  
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      obj[i] = await uploadBase64s(obj[i]);
     }
-    toSave.config = DATA.config;
-    dbRef.set(toSave).catch(e => {
-      console.error("Error guardando en Firebase:", e);
-      localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
-    });
   } else {
-    localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
+    for (const key of Object.keys(obj)) {
+      if (typeof obj[key] === 'string' && obj[key].startsWith('data:')) {
+        try {
+          const response = await fetch('/api/upload-media', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file: obj[key] })
+          });
+          if (response.ok) {
+            const res = await response.json();
+            obj[key] = res.url;
+          } else {
+            console.error("Error al subir archivo, código:", response.status);
+          }
+        } catch (e) {
+          console.error("Error al subir archivo de campo:", key, e);
+        }
+      } else {
+        obj[key] = await uploadBase64s(obj[key]);
+      }
+    }
   }
+  return obj;
+}
+
+async function saveToServer() {
+  try {
+    const response = await fetch('/api/save-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(DATA)
+    });
+    if (!response.ok) throw new Error('Error al guardar datos en servidor');
+  } catch (e) {
+    console.error("Error al sincronizar con el servidor:", e);
+  }
+}
+
+async function saveData() {
+  // Guardamos localmente primero como respaldo inmediato
+  localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
+  
+  // Si hay imágenes en base64 en DATA, las subimos primero
+  await uploadBase64s(DATA);
+  
+  // Guardamos localmente de nuevo con los URLs reemplazados
+  localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
+  
+  // Enviamos al servidor de base de datos
+  await saveToServer();
 }
 
 function loadFromLocalStorage() {
@@ -3068,28 +3053,32 @@ function loadFromLocalStorage() {
 }
 
 function loadData() {
-  // loadData ahora solo carga desde localStorage como fallback inicial
-  // Firebase se inicializa por separado en initFirebase()
   loadFromLocalStorage();
 }
 
-// Indicador visual de estado Firebase
 function showFirebaseStatus(estado) {
   const el = document.getElementById('firebase-status');
   if (!el) return;
   const estados = {
-    'sin-configurar': { color: '#eab308', text: '⚠ Base de datos local (configurar Firebase)' },
-    'conectando':     { color: '#60a5fa', text: '⏳ Conectando a Firebase...' },
-    'conectado':      { color: '#22c55e', text: '🟢 Base de datos en la nube activa' },
-    'error':          { color: '#ef4444', text: '🔴 Error Firebase — usando datos locales' },
+    'sin-configurar': { color: '#eab308', text: '⚠ Base de datos local (configurar backend)' },
+    'conectando':     { color: '#60a5fa', text: '⏳ Conectando a la base de datos...' },
+    'conectado':      { color: '#22c55e', text: '🟢 Base de datos en la nube activa (Postgres)' },
+    'error':          { color: '#ef4444', text: '🔴 Error de conexión — usando datos locales' },
   };
   const s = estados[estado] || estados['sin-configurar'];
   el.style.display = 'block';
   el.style.color = s.color;
   el.textContent = s.text;
-  // Ocultar instrucciones si Firebase está activo
+  
+  // Ocultar banner de instrucciones si la base de datos está conectada o conectando
   const banner = document.getElementById('firebase-instructions');
-  if (banner) banner.style.display = (estado === 'conectado') ? 'none' : 'block';
+  if (banner) {
+    if (estado === 'conectado' || estado === 'conectando') {
+      banner.style.display = 'none';
+    } else {
+      banner.style.display = 'block';
+    }
+  }
 }
 
 // ===== NAV =====
