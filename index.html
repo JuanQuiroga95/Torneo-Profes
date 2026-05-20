@@ -1998,6 +1998,7 @@
             <tr>
               <th>#</th>
               <th>Equipo</th>
+              <th>PTS</th>
               <th>PJ</th>
               <th>G</th>
               <th>E</th>
@@ -2005,7 +2006,6 @@
               <th>GF</th>
               <th>GC</th>
               <th>DIF</th>
-              <th>PTS</th>
             </tr>
           </thead>
           <tbody id="tabla-body">
@@ -3412,6 +3412,7 @@ function renderTabla() {
           <div class="team-name">${e.nombre}</div>
         </div>
       </td>
+      <td class="pts">${e.pts}</td>
       <td>${e.pj}</td>
       <td>${e.g}</td>
       <td>${e.em}</td>
@@ -3419,7 +3420,6 @@ function renderTabla() {
       <td>${e.gf}</td>
       <td>${e.gc}</td>
       <td>${dif > 0 ? '+' : ''}${dif}</td>
-      <td class="pts">${e.pts}</td>
     </tr>`;
   }).join('');
 }
