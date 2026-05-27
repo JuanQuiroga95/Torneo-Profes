@@ -2930,6 +2930,15 @@ async function initFirebase() {
     if (!response.ok) throw new Error('Error al obtener datos');
     const remoto = await response.json();
     if (remoto && Object.keys(remoto).length > 0) {
+      if (DATA.lastModified && remoto.lastModified && DATA.lastModified > remoto.lastModified) {
+         if (confirm("Tienes cambios locales más recientes que no se guardaron en la nube. ¿Deseas subir los cambios locales a la nube y sobreescribir los del servidor?")) {
+            saveData();
+            databaseReady = true;
+            renderPublic();
+            showFirebaseStatus('conectado');
+            return;
+         }
+      }
       DATA = { ...DATA, ...remoto };
       if (!DATA.admins || DATA.admins.length === 0) DATA.admins = [...DEFAULT_ADMINS];
       if (!DATA.noticias) DATA.noticias = [];
@@ -3012,31 +3021,79 @@ async function uploadBase64s(obj) {
 }
 
 async function saveToServer() {
-  try {
-    const response = await fetch('/api/save-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(DATA)
-    });
-    if (!response.ok) throw new Error('Error al guardar datos en servidor');
-  } catch (e) {
-    console.error("Error al sincronizar con el servidor:", e);
-  }
+  const response = await fetch('/api/save-data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(DATA)
+  });
+  if (!response.ok) throw new Error('Error al guardar datos en servidor');
 }
 
+let isSaving = false;
+let needsSave = false;
+
 async function saveData() {
+  DATA.lastModified = Date.now();
   // Guardamos localmente primero como respaldo inmediato
   localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
   
-  // Si hay imágenes en base64 en DATA, las subimos primero
-  await uploadBase64s(DATA);
+  if (isSaving) {
+    needsSave = true;
+    return;
+  }
   
-  // Guardamos localmente de nuevo con los URLs reemplazados
-  localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
-  
-  // Enviamos al servidor de base de datos
-  await saveToServer();
+  isSaving = true;
+  const statusEl = document.getElementById('firebase-status');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#eab308';
+    statusEl.textContent = '⏳ Guardando cambios en la nube...';
+  }
+
+  while (true) {
+    needsSave = false;
+    try {
+      // Si hay imágenes en base64 en DATA, las subimos primero
+      await uploadBase64s(DATA);
+      
+      // Guardamos localmente de nuevo con los URLs reemplazados
+      localStorage.setItem('torneo_profes_data', JSON.stringify(DATA));
+      
+      // Enviamos al servidor de base de datos
+      await saveToServer();
+    } catch (e) {
+      console.error("Error en saveData:", e);
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = '🔴 Error al guardar en la nube. Tus cambios están guardados localmente. Revisa tu conexión.';
+      }
+      isSaving = false;
+      return; // Exit and leave error state visible
+    }
+    
+    if (!needsSave) break;
+  }
+
+  isSaving = false;
+  // Solo restauramos a conectado si realmente cargó ok initFirebase
+  if (typeof databaseReady !== 'undefined' && databaseReady) {
+    showFirebaseStatus('conectado');
+  } else {
+    // Si todavía no conectó, lo dejamos así (initFirebase se encargará de poner conectado)
+    if (statusEl && statusEl.textContent.includes('Guardando')) {
+      statusEl.style.display = 'none';
+    }
+  }
 }
+
+window.addEventListener('beforeunload', function(e) {
+  if (isSaving) {
+    e.preventDefault();
+    e.returnValue = 'Guardando datos, no cierres la ventana aún.';
+    return e.returnValue;
+  }
+});
 
 function loadFromLocalStorage() {
   const s = localStorage.getItem('torneo_profes_data');
